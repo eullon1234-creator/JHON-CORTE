@@ -1,0 +1,2627 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Barbearia - Agende seu horário</title>
+    <meta name="description" content="Agende seu horário na nossa barbearia de forma rápida e fácil.">
+    <meta name="theme-color" content="#09090b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Barbearia">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Barbearia - Agende seu horário">
+    <meta property="og:description" content="Agende seu horário na nossa barbearia de forma rápida e fácil.">
+
+    <!--
+        PWA - Para futura implementação:
+        <link rel="manifest" href="manifest.json">
+        <script>
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js');
+            }
+        </script>
+    -->
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            800: '#92400e',
+                            900: '#78350f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        :root {
+            --brand-color: #f59e0b;
+            --brand-color-light: #fbbf24;
+            --brand-color-dark: #d97706;
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #18181b; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+
+        /* Animações */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px var(--brand-color), 0 0 10px transparent; }
+            50% { box-shadow: 0 0 10px var(--brand-color), 0 0 20px var(--brand-color); }
+        }
+        @keyframes spin-loader {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes toast-out {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100%); }
+        }
+
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+        .animate-slide-in-right { animation: slideInRight 0.4s ease-out forwards; }
+        .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+        .skeleton {
+            background: linear-gradient(90deg, #27272a 25%, #3f3f46 50%, #27272a 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 0.5rem;
+        }
+
+        .toast-enter { animation: toast-in 0.3s ease-out forwards; }
+        .toast-exit { animation: toast-out 0.3s ease-in forwards; }
+
+        /* Brand color dinâmica via CSS custom properties */
+        .bg-brand-dynamic { background-color: var(--brand-color); }
+        .text-brand-dynamic { color: var(--brand-color); }
+        .border-brand-dynamic { border-color: var(--brand-color); }
+        .ring-brand-dynamic { --tw-ring-color: var(--brand-color); }
+        .hover-bg-brand-dynamic:hover { background-color: var(--brand-color-dark); }
+
+        /* Loading spinner */
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid #27272a;
+            border-top-color: var(--brand-color);
+            border-radius: 50%;
+            animation: spin-loader 0.8s linear infinite;
+        }
+
+        /* Glassmorphism */
+        .glass {
+            background: rgba(24, 24, 27, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Input estilo premium */
+        input[type="text"], input[type="tel"], input[type="number"], input[type="date"],
+        input[type="time"], input[type="color"], textarea, select {
+            background: #18181b !important;
+            border: 1px solid #3f3f46 !important;
+            color: #ffffff !important;
+            border-radius: 0.75rem !important;
+            padding: 0.75rem 1rem !important;
+            transition: all 0.2s !important;
+            outline: none !important;
+            width: 100% !important;
+            font-size: 16px !important;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--brand-color) !important;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2) !important;
+        }
+
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative; width: 48px; height: 26px;
+            background: #3f3f46; border-radius: 13px; cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-switch.active { background: var(--brand-color); }
+        .toggle-switch::after {
+            content: ''; position: absolute;
+            width: 22px; height: 22px; background: white;
+            border-radius: 50%; top: 2px; left: 2px;
+            transition: transform 0.3s;
+        }
+        .toggle-switch.active::after { transform: translateX(22px); }
+
+        /* Disable user-select em botões */
+        button { -webkit-user-select: none; user-select: none; }
+
+        /* Tab ativa no admin */
+        .admin-tab.active {
+            background: var(--brand-color);
+            color: #09090b;
+        }
+
+        /* Transição de páginas */
+        .page-transition {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .page-transition.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen">
+
+    <!-- ==================== -->
+    <!-- LOADING SCREEN       -->
+    <!-- ==================== -->
+    <div id="loadingScreen" class="fixed inset-0 z-[9999] bg-zinc-950 flex flex-col items-center justify-center">
+        <div class="flex flex-col items-center gap-4 animate-fade-in">
+            <!-- Logo animado -->
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-brand-dynamic">
+                <path d="M6 3v18M6 3c2 2 6 2 6 0M6 9c2 2 6 2 6 0M6 15c2 2 6 2 6 0M18 3v18M18 3c-2 2-6 2-6 0M18 9c-2 2-6 2-6 0M18 15c-2 2-6 2-6 0" stroke-linecap="round"/>
+            </svg>
+            <div class="spinner"></div>
+            <p class="text-zinc-500 text-sm mt-2">Carregando...</p>
+        </div>
+    </div>
+
+    <!-- ==================== -->
+    <!-- TOAST CONTAINER      -->
+    <!-- ==================== -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-[9998] flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- ==================== -->
+    <!-- MODAL OVERLAY        -->
+    <!-- ==================== -->
+    <div id="modalOverlay" class="fixed inset-0 z-[9000] bg-black/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div id="modalContent" class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 animate-fade-in-up">
+            <!-- Conteúdo dinâmico -->
+        </div>
+    </div>
+
+    <!-- ==================== -->
+    <!-- PÁGINA DO CLIENTE    -->
+    <!-- ==================== -->
+    <div id="clientPage" class="hidden">
+
+        <!-- HERO -->
+        <section id="heroSection" class="relative overflow-hidden">
+            <!-- Background gradiente -->
+            <div class="absolute inset-0 bg-gradient-to-b from-zinc-900 via-zinc-950 to-zinc-950"></div>
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute top-0 left-1/4 w-96 h-96 bg-brand-dynamic rounded-full blur-3xl"></div>
+                <div class="absolute bottom-0 right-1/4 w-64 h-64 bg-brand-dynamic rounded-full blur-3xl"></div>
+            </div>
+
+            <div class="relative max-w-lg mx-auto px-4 py-16 md:py-24 text-center">
+                <!-- Logo -->
+                <div id="heroLogo" class="mb-6 flex justify-center">
+                    <div class="w-20 h-20 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-lg">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-brand-dynamic">
+                            <path d="M6 3v18M6 3c2 2 6 2 6 0M6 9c2 2 6 2 6 0M6 15c2 2 6 2 6 0M18 3v18M18 3c-2 2-6 2-6 0M18 9c-2 2-6 2-6 0M18 15c-2 2-6 2-6 0" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Nome -->
+                <h1 id="heroNome" class="text-3xl md:text-4xl font-bold tracking-tight mb-3 text-white uppercase">
+                    Barbearia Premium
+                </h1>
+
+                <!-- Slogan -->
+                <p id="heroSlogan" class="text-brand-dynamic font-medium text-lg mb-2">
+                    Seu estilo começa aqui.
+                </p>
+
+                <!-- Descrição -->
+                <p id="heroDescricao" class="text-zinc-400 text-sm md:text-base mb-8 max-w-sm mx-auto">
+                    Agende seu horário de forma rápida e fácil.
+                </p>
+
+                <!-- Botão CTA -->
+                <button id="btnAgendar" onclick="startBooking()" class="inline-flex items-center gap-2 bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold text-base px-8 py-4 rounded-xl shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    AGENDAR MEU HORÁRIO
+                </button>
+
+                <!-- Instagram Link -->
+                <div id="heroInstagram" class="hidden mt-5 animate-fade-in">
+                    <a id="heroInstaLink" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 hover:border-zinc-600 text-zinc-300 hover:text-white transition-all duration-200 hover:scale-[1.02] group">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="text-pink-500 group-hover:text-pink-400 transition">
+                            <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" stroke-width="1.8"/>
+                            <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/>
+                            <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/>
+                        </svg>
+                        <span class="text-sm font-medium"><span id="heroInstaTexto">Veja nossos cortes no Instagram</span></span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-zinc-500 group-hover:text-zinc-300 transition"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- BOOKING FLOW -->
+        <section id="bookingSection" class="hidden max-w-lg mx-auto px-4 pb-8">
+
+            <!-- Progress Bar -->
+            <div class="mb-8 mt-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span id="stepLabel" class="text-sm text-zinc-400">Etapa 1 de 4</span>
+                    <button onclick="goBackStep()" id="btnVoltar" class="text-sm text-zinc-500 hover:text-white transition hidden">
+                        ← Voltar
+                    </button>
+                </div>
+                <div class="w-full bg-zinc-800 rounded-full h-1.5">
+                    <div id="progressBar" class="h-1.5 rounded-full bg-brand-dynamic transition-all duration-500" style="width:25%"></div>
+                </div>
+            </div>
+
+            <!-- STEP 1: Dados pessoais -->
+            <div id="step1" class="animate-fade-in-up">
+                <h2 class="text-xl font-bold mb-1">Seus dados</h2>
+                <p class="text-zinc-400 text-sm mb-6">Preencha para continuar</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Nome completo</label>
+                        <input type="text" id="inputNome" placeholder="Digite seu nome" autocomplete="name" class="w-full">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">WhatsApp</label>
+                        <input type="tel" id="inputTelefone" placeholder="(00) 00000-0000" autocomplete="tel" class="w-full">
+                    </div>
+                </div>
+
+                <button onclick="goToStep(2)" class="w-full mt-6 bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold py-3.5 rounded-xl transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]">
+                    CONTINUAR
+                </button>
+            </div>
+
+            <!-- STEP 2: Serviços -->
+            <div id="step2" class="hidden animate-fade-in-up">
+                <h2 class="text-xl font-bold mb-1">Escolha o serviço</h2>
+                <p class="text-zinc-400 text-sm mb-6">Selecione o que deseja</p>
+
+                <div id="servicosList" class="space-y-3">
+                    <!-- Serviços carregados dinamicamente -->
+                </div>
+
+                <button onclick="goToStep(3)" id="btnStep2" class="w-full mt-6 bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold py-3.5 rounded-xl transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] opacity-50 cursor-not-allowed" disabled>
+                    CONTINUAR
+                </button>
+            </div>
+
+            <!-- STEP 3: Data -->
+            <div id="step3" class="hidden animate-fade-in-up">
+                <h2 class="text-xl font-bold mb-1">Escolha a data</h2>
+                <p class="text-zinc-400 text-sm mb-6">Selecione o dia desejado</p>
+
+                <input type="date" id="inputData" class="w-full mb-4">
+
+                <div id="dataInfo" class="hidden text-center p-4 bg-zinc-900 border border-zinc-800 rounded-xl mb-4">
+                    <p id="dataInfoText" class="text-lg font-semibold text-brand-dynamic"></p>
+                    <p id="dataInfoSub" class="text-sm text-zinc-400 mt-1"></p>
+                </div>
+
+                <div id="dataAlerta" class="hidden text-center p-4 bg-red-950/30 border border-red-900/50 rounded-xl mb-4">
+                    <p class="text-red-400 text-sm">A barbearia não funciona neste dia.</p>
+                </div>
+
+                <button onclick="goToStep(4)" id="btnStep3" class="w-full mt-2 bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold py-3.5 rounded-xl transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] opacity-50 cursor-not-allowed" disabled>
+                    CONTINUAR
+                </button>
+            </div>
+
+            <!-- STEP 4: Horário -->
+            <div id="step4" class="hidden animate-fade-in-up">
+                <h2 class="text-xl font-bold mb-1">Escolha o horário</h2>
+                <p class="text-zinc-400 text-sm mb-6">Horários disponíveis</p>
+
+                <div id="horariosLoading" class="hidden flex justify-center py-8">
+                    <div class="spinner"></div>
+                </div>
+
+                <div id="horariosGrid" class="grid grid-cols-3 gap-3">
+                    <!-- Horários carregados dinamicamente -->
+                </div>
+
+                <div id="semHorarios" class="hidden text-center py-8">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-zinc-600 mx-auto mb-3">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12,6 12,12 16,14"/>
+                    </svg>
+                    <p class="text-zinc-400">Nenhum horário disponível para esta data.</p>
+                </div>
+
+                <!-- Resumo antes de confirmar -->
+                <div id="resumoBooking" class="hidden mt-6 p-4 bg-zinc-900 border border-zinc-800 rounded-xl">
+                    <h3 class="text-sm font-semibold text-zinc-400 mb-3 uppercase tracking-wide">Resumo</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-zinc-400">Nome</span><span id="resumoNome" class="font-medium"></span></div>
+                        <div class="flex justify-between"><span class="text-zinc-400">Telefone</span><span id="resumoTelefone" class="font-medium"></span></div>
+                        <div class="flex justify-between"><span class="text-zinc-400">Serviço</span><span id="resumoServico" class="font-medium text-brand-dynamic"></span></div>
+                        <div class="flex justify-between"><span class="text-zinc-400">Valor</span><span id="resumoPreco" class="font-medium text-brand-dynamic"></span></div>
+                        <div class="flex justify-between"><span class="text-zinc-400">Data</span><span id="resumoData" class="font-medium"></span></div>
+                        <div class="flex justify-between"><span class="text-zinc-400">Horário</span><span id="resumoHorario" class="font-medium"></span></div>
+                    </div>
+                </div>
+
+                <button onclick="criarAgendamento()" id="btnConfirmar" class="w-full mt-6 bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold py-3.5 rounded-xl transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] opacity-50 cursor-not-allowed hidden" disabled>
+                    <span id="btnConfirmarText">SOLICITAR AGENDAMENTO</span>
+                    <span id="btnConfirmarLoading" class="hidden flex items-center justify-center gap-2">
+                        <div class="w-5 h-5 border-2 border-zinc-950/30 border-t-zinc-950 rounded-full animate-spin"></div>
+                        Processando...
+                    </span>
+                </button>
+            </div>
+
+            <!-- SUCESSO -->
+            <div id="stepSucesso" class="hidden text-center py-8 animate-fade-in-up">
+                <div class="w-20 h-20 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mx-auto mb-6">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-green-500">
+                        <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold mb-2">Solicitação Enviada!</h2>
+                <p class="text-zinc-400 mb-6">Seu agendamento foi enviado com sucesso. Aguarde a confirmação pelo WhatsApp.</p>
+
+                <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-6 text-left text-sm space-y-2">
+                    <div class="flex justify-between"><span class="text-zinc-400">Serviço</span><span id="sucessoServico" class="font-medium text-brand-dynamic"></span></div>
+                    <div class="flex justify-between"><span class="text-zinc-400">Data</span><span id="sucessoData" class="font-medium"></span></div>
+                    <div class="flex justify-between"><span class="text-zinc-400">Horário</span><span id="sucessoHorario" class="font-medium"></span></div>
+                    <div class="flex justify-between"><span class="text-zinc-400">Status</span><span class="text-yellow-400 font-medium">⏳ Pendente</span></div>
+                </div>
+
+                <button onclick="resetBooking()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-3 rounded-xl transition">
+                    FAZER NOVO AGENDAMENTO
+                </button>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="border-t border-zinc-900 py-8 px-4 mt-12">
+            <div class="max-w-lg mx-auto text-center">
+                <p class="text-zinc-500 text-sm mb-1">© <span id="footerAno">2026</span> <span id="footerNome">Barbearia Premium</span></p>
+                <p class="text-zinc-600 text-xs mb-4">Agendamento rápido e fácil.</p>
+                <button onclick="showAdminLogin()" class="text-zinc-700 hover:text-zinc-400 text-xs transition">
+                    Área do barbeiro
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ========================== -->
+    <!-- PÁGINA DE APROVAÇÃO        -->
+    <!-- ========================== -->
+    <div id="approvalPage" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-sm w-full">
+
+            <!-- Loading -->
+            <div id="approvalLoading" class="text-center py-12">
+                <div class="spinner mx-auto mb-4"></div>
+                <p class="text-zinc-400 text-sm">Carregando agendamento...</p>
+            </div>
+
+            <!-- Erro -->
+            <div id="approvalError" class="hidden text-center py-12 animate-fade-in">
+                <div class="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mx-auto mb-4">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-500">
+                        <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold mb-2 text-red-400">Agendamento não encontrado</h2>
+                <p class="text-zinc-400 text-sm">Este link de aprovação é inválido ou expirou.</p>
+            </div>
+
+            <!-- Detalhes -->
+            <div id="approvalDetails" class="hidden animate-fade-in-up">
+                <div class="text-center mb-6">
+                    <div class="w-14 h-14 rounded-2xl bg-brand-dynamic/10 border border-brand-dynamic/30 flex items-center justify-center mx-auto mb-4">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-brand-dynamic">
+                            <path d="M6 3v18M6 3c2 2 6 2 6 0M6 9c2 2 6 2 6 0M6 15c2 2 6 2 6 0M18 3v18M18 3c-2 2-6 2-6 0M18 9c-2 2-6 2-6 0M18 15c-2 2-6 2-6 0" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-bold">Novo Agendamento</h2>
+                </div>
+
+                <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-3 mb-6">
+                    <div class="flex items-center gap-3">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-zinc-400 shrink-0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <span id="approvalNome" class="font-medium"></span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-zinc-400 shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        <span id="approvalTelefone" class="text-zinc-300 text-sm"></span>
+                    </div>
+                    <hr class="border-zinc-800">
+                    <div class="flex items-center gap-3">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-brand-dynamic shrink-0"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12L12 12"/><path d="M20 4L8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8L20 20"/></svg>
+                        <span id="approvalServico" class="text-brand-dynamic font-medium"></span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-zinc-400 shrink-0"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        <span id="approvalPreco" class="text-zinc-300"></span>
+                    </div>
+                    <hr class="border-zinc-800">
+                    <div class="flex items-center gap-3">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-zinc-400 shrink-0"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span id="approvalData" class="text-zinc-300"></span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-zinc-400 shrink-0"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                        <span id="approvalHorario" class="text-zinc-300 font-semibold text-lg"></span>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="text-center mb-6">
+                    <span class="text-xs uppercase tracking-wider text-zinc-500 font-medium">Status</span>
+                    <div id="approvalStatus" class="mt-1 text-lg font-bold"></div>
+                </div>
+
+                <!-- Ações (apenas para pendente) -->
+                <div id="approvalActions" class="space-y-3">
+                    <button onclick="aprovarAgendamento()" id="btnAprovar" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.98]">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                        APROVAR AGENDAMENTO
+                    </button>
+                    <button onclick="recusarAgendamento()" class="w-full bg-zinc-800 hover:bg-red-600/20 text-red-400 font-bold py-3.5 rounded-xl border border-zinc-700 hover:border-red-600/50 transition-all duration-200 flex items-center justify-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        RECUSAR / CANCELAR
+                    </button>
+                </div>
+
+                <!-- Resultado -->
+                <div id="approvalResult" class="hidden text-center animate-fade-in-up">
+                    <div id="approvalResultIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
+                    <h3 id="approvalResultTitle" class="text-xl font-bold mb-2"></h3>
+                    <p id="approvalResultDesc" class="text-zinc-400 text-sm mb-6"></p>
+                    <button id="btnAvisarCliente" onclick="avisarCliente()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                        AVISAR CLIENTE NO WHATSAPP
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================= -->
+    <!-- ADMIN LOGIN             -->
+    <!-- ======================= -->
+    <div id="adminLogin" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-sm w-full animate-fade-in-up">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto mb-4">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-brand-dynamic">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold">Área Restrita</h2>
+                <p class="text-zinc-400 text-sm mt-1">Digite seu PIN para acessar</p>
+            </div>
+
+            <div class="space-y-4">
+                <input type="password" id="inputPin" placeholder="••••" maxlength="10" class="w-full text-center text-2xl tracking-[0.5em] font-mono" onkeydown="if(event.key==='Enter')verificarPin()">
+                <button onclick="verificarPin()" class="w-full bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold py-3.5 rounded-xl transition-all duration-200">
+                    ENTRAR
+                </button>
+                <p id="pinError" class="hidden text-red-400 text-sm text-center">PIN incorreto. Tente novamente.</p>
+            </div>
+
+            <div class="text-center mt-6">
+                <button onclick="goToClient()" class="text-zinc-600 hover:text-zinc-400 text-sm transition">← Voltar para a página</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================= -->
+    <!-- ADMIN PANEL             -->
+    <!-- ======================= -->
+    <div id="adminPanel" class="hidden min-h-screen">
+        <!-- Admin Header -->
+        <header class="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-50">
+            <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-brand-dynamic">
+                        <path d="M6 3v18M6 3c2 2 6 2 6 0M6 9c2 2 6 2 6 0M6 15c2 2 6 2 6 0M18 3v18M18 3c-2 2-6 2-6 0M18 9c-2 2-6 2-6 0M18 15c-2 2-6 2-6 0" stroke-linecap="round"/>
+                    </svg>
+                    <span class="font-bold text-sm md:text-base">Painel Admin</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="goToClient()" class="text-zinc-400 hover:text-white text-sm px-3 py-1.5 rounded-lg hover:bg-zinc-800 transition">
+                        Ver site
+                    </button>
+                    <button onclick="logoutAdmin()" class="text-red-400 hover:text-red-300 text-sm px-3 py-1.5 rounded-lg hover:bg-zinc-800 transition">
+                        Sair
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row">
+            <!-- Sidebar (Desktop) / Tabs (Mobile) -->
+            <nav class="md:w-56 md:min-h-[calc(100vh-57px)] md:border-r md:border-zinc-800 bg-zinc-950 md:bg-zinc-900/50">
+                <div class="flex md:flex-col overflow-x-auto md:overflow-x-visible p-2 md:p-3 gap-1 md:gap-1 no-scrollbar">
+                    <button onclick="showAdminTab('dashboard')" class="admin-tab active flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all" data-tab="dashboard">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                        <span>Dashboard</span>
+                    </button>
+                    <button onclick="showAdminTab('agendamentos')" class="admin-tab flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all" data-tab="agendamentos">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span>Agendamentos</span>
+                    </button>
+                    <button onclick="showAdminTab('servicos')" class="admin-tab flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all" data-tab="servicos">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12L12 12"/><path d="M20 4L8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8L20 20"/></svg>
+                        <span>Serviços</span>
+                    </button>
+                    <button onclick="showAdminTab('horarios')" class="admin-tab flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all" data-tab="horarios">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                        <span>Horários</span>
+                    </button>
+                    <button onclick="showAdminTab('personalizar')" class="admin-tab flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all" data-tab="personalizar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        <span>Personalizar</span>
+                    </button>
+                    <button onclick="showAdminTab('mensagens')" class="admin-tab flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all" data-tab="mensagens">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <span>Mensagens</span>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Admin Content Area -->
+            <main class="flex-1 p-4 md:p-6">
+
+                <!-- TAB: Dashboard -->
+                <div id="tabDashboard" class="admin-content">
+                    <h2 class="text-xl font-bold mb-6">Dashboard</h2>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                            <p class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Hoje</p>
+                            <p id="statTotal" class="text-2xl font-bold text-brand-dynamic">0</p>
+                        </div>
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                            <p class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Confirmados</p>
+                            <p id="statConfirmados" class="text-2xl font-bold text-green-500">0</p>
+                        </div>
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                            <p class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Pendentes</p>
+                            <p id="statPendentes" class="text-2xl font-bold text-yellow-500">0</p>
+                        </div>
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                            <p class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Cancelados</p>
+                            <p id="statCancelados" class="text-2xl font-bold text-red-500">0</p>
+                        </div>
+                    </div>
+
+                    <!-- Faturamento e Próximo -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                            <p class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Faturamento previsto (hoje)</p>
+                            <p id="statFaturamento" class="text-2xl font-bold text-brand-dynamic">R$ 0,00</p>
+                        </div>
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                            <p class="text-xs text-zinc-500 uppercase tracking-wide mb-1">Próximo cliente</p>
+                            <p id="statProximo" class="text-lg font-semibold text-white">—</p>
+                        </div>
+                    </div>
+
+                    <!-- Lista rápida de hoje -->
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                        <h3 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-4">Agendamentos de hoje</h3>
+                        <div id="dashboardHojeList" class="space-y-2">
+                            <p class="text-zinc-600 text-sm">Nenhum agendamento hoje.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: Agendamentos -->
+                <div id="tabAgendamentos" class="admin-content hidden">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <h2 class="text-xl font-bold">Agendamentos</h2>
+                        <div class="flex items-center gap-2">
+                            <input type="date" id="adminFilterData" class="!w-auto !text-sm !py-2" onchange="loadAdminAgendamentos()">
+                        </div>
+                    </div>
+
+                    <!-- Filtros de status -->
+                    <div class="flex gap-2 mb-4 overflow-x-auto no-scrollbar">
+                        <button onclick="filterStatus('todos')" class="status-filter active px-4 py-2 rounded-lg text-sm font-medium bg-brand-dynamic text-zinc-950 whitespace-nowrap" data-filter="todos">Todos</button>
+                        <button onclick="filterStatus('pendente')" class="status-filter px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 whitespace-nowrap transition" data-filter="pendente">Pendentes</button>
+                        <button onclick="filterStatus('confirmado')" class="status-filter px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 whitespace-nowrap transition" data-filter="confirmado">Confirmados</button>
+                        <button onclick="filterStatus('cancelado')" class="status-filter px-4 py-2 rounded-lg text-sm font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 whitespace-nowrap transition" data-filter="cancelado">Cancelados</button>
+                    </div>
+
+                    <div id="adminAgendamentosList" class="space-y-3">
+                        <p class="text-zinc-600 text-sm py-4 text-center">Nenhum agendamento encontrado.</p>
+                    </div>
+                </div>
+
+                <!-- TAB: Serviços -->
+                <div id="tabServicos" class="admin-content hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold">Serviços</h2>
+                        <button onclick="openServiceModal()" class="bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-semibold text-sm px-4 py-2.5 rounded-xl transition flex items-center gap-2">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Novo serviço
+                        </button>
+                    </div>
+                    <div id="adminServicosList" class="space-y-3">
+                        <p class="text-zinc-600 text-sm">Carregando serviços...</p>
+                    </div>
+                </div>
+
+                <!-- TAB: Horários -->
+                <div id="tabHorarios" class="admin-content hidden">
+                    <h2 class="text-xl font-bold mb-6">Horários de Atendimento</h2>
+
+                    <!-- Dias de funcionamento -->
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-6">
+                        <h3 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-4">Dias de funcionamento</h3>
+                        <div id="diasFuncionamentoGrid" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <!-- Gerado dinamicamente -->
+                        </div>
+                    </div>
+
+                    <!-- Horários por dia -->
+                    <div id="horariosPorDiaContainer" class="space-y-4">
+                        <!-- Gerado dinamicamente -->
+                    </div>
+                </div>
+
+                <!-- TAB: Personalizar -->
+                <div id="tabPersonalizar" class="admin-content hidden">
+                    <h2 class="text-xl font-bold mb-6">Personalizar Barbearia</h2>
+
+                    <div class="space-y-6">
+                        <!-- Identidade -->
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                            <h3 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-4">Identidade</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1.5">Nome da barbearia</label>
+                                    <input type="text" id="cfgNome" placeholder="Nome da barbearia">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1.5">Slogan</label>
+                                    <input type="text" id="cfgSlogan" placeholder="Seu estilo começa aqui.">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1.5">Descrição</label>
+                                    <textarea id="cfgDescricao" placeholder="Descrição da barbearia" rows="2" class="resize-none"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1.5">URL do Logo (opcional)</label>
+                                    <input type="text" id="cfgLogo" placeholder="https://exemplo.com/logo.png">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1.5">WhatsApp do barbeiro</label>
+                                    <input type="tel" id="cfgWhatsapp" placeholder="55XXXXXXXXXXX">
+                                    <p class="text-xs text-zinc-500 mt-1">Formato: código do país + DDD + número (ex: 5586999999999)</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1.5">Instagram</label>
+                                    <input type="text" id="cfgInstagram" placeholder="@seuperfil">
+                                    <p class="text-xs text-zinc-500 mt-1">Seu @ do Instagram (ex: @barbeariapremium)</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1.5">Texto do link do Instagram</label>
+                                    <input type="text" id="cfgInstagramTexto" placeholder="Veja nossos cortes no Instagram">
+                                    <p class="text-xs text-zinc-500 mt-1">Mensagem que aparece para o cliente junto ao link</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Aparência -->
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                            <h3 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-4">Cor Principal</h3>
+                            <div class="grid grid-cols-3 md:grid-cols-6 gap-3 mb-4">
+                                <button onclick="selectColor('#f59e0b')" class="color-option h-12 rounded-xl bg-amber-500 border-2 border-transparent hover:scale-105 transition" data-color="#f59e0b" title="Dourado"></button>
+                                <button onclick="selectColor('#fbbf24')" class="color-option h-12 rounded-xl bg-yellow-400 border-2 border-transparent hover:scale-105 transition" data-color="#fbbf24" title="Âmbar"></button>
+                                <button onclick="selectColor('#ef4444')" class="color-option h-12 rounded-xl bg-red-500 border-2 border-transparent hover:scale-105 transition" data-color="#ef4444" title="Vermelho"></button>
+                                <button onclick="selectColor('#3b82f6')" class="color-option h-12 rounded-xl bg-blue-500 border-2 border-transparent hover:scale-105 transition" data-color="#3b82f6" title="Azul"></button>
+                                <button onclick="selectColor('#22c55e')" class="color-option h-12 rounded-xl bg-green-500 border-2 border-transparent hover:scale-105 transition" data-color="#22c55e" title="Verde"></button>
+                                <button onclick="selectColor('#a855f7')" class="color-option h-12 rounded-xl bg-purple-500 border-2 border-transparent hover:scale-105 transition" data-color="#a855f7" title="Roxo"></button>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Cor personalizada (HEX)</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="cfgCorHex" placeholder="#f59e0b" class="!w-full">
+                                    <input type="color" id="cfgCorPicker" value="#f59e0b" class="!w-14 !h-12 !p-0.5 cursor-pointer !rounded-xl" onchange="document.getElementById('cfgCorHex').value=this.value; selectColor(this.value)">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="salvarPersonalizacao()" id="btnSalvarPersonalizacao" class="w-full bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold py-3.5 rounded-xl transition-all duration-200">
+                            SALVAR ALTERAÇÕES
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB: Mensagens -->
+                <div id="tabMensagens" class="admin-content hidden">
+                    <h2 class="text-xl font-bold mb-2">Mensagens</h2>
+                    <p class="text-zinc-400 text-sm mb-6">Personalize as mensagens enviadas pelo WhatsApp. Use as variáveis: <code class="bg-zinc-800 px-1.5 py-0.5 rounded text-brand-dynamic text-xs">{nome}</code> <code class="bg-zinc-800 px-1.5 py-0.5 rounded text-brand-dynamic text-xs">{servico}</code> <code class="bg-zinc-800 px-1.5 py-0.5 rounded text-brand-dynamic text-xs">{data}</code> <code class="bg-zinc-800 px-1.5 py-0.5 rounded text-brand-dynamic text-xs">{horario}</code> <code class="bg-zinc-800 px-1.5 py-0.5 rounded text-brand-dynamic text-xs">{preco}</code> <code class="bg-zinc-800 px-1.5 py-0.5 rounded text-brand-dynamic text-xs">{barbearia}</code></p>
+
+                    <div class="space-y-6">
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                            <label class="block text-sm font-semibold text-zinc-300 mb-2">Mensagem de confirmação</label>
+                            <textarea id="cfgMsgConfirmacao" rows="4" class="resize-none" placeholder="Olá {nome}! Seu agendamento foi confirmado para {data} às {horario}."></textarea>
+                        </div>
+
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                            <label class="block text-sm font-semibold text-zinc-300 mb-2">Mensagem de cancelamento</label>
+                            <textarea id="cfgMsgCancelamento" rows="4" class="resize-none" placeholder="Olá {nome}! Infelizmente seu agendamento das {horario} foi cancelado."></textarea>
+                        </div>
+
+                        <button onclick="salvarMensagens()" class="w-full bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold py-3.5 rounded-xl transition-all duration-200">
+                            SALVAR MENSAGENS
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ======================= -->
+    <!-- JAVASCRIPT              -->
+    <!-- ======================= -->
+    <script type="module">
+
+        // ============================================
+        // CONFIGURAÇÕES DO SISTEMA
+        // ============================================
+
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyAE5RNRV31QLx4e37ukqTJaTBuBMTyPqVk",
+            authDomain: "salao-de-cabelo-web.firebaseapp.com",
+            projectId: "salao-de-cabelo-web",
+            storageBucket: "salao-de-cabelo-web.firebasestorage.app",
+            messagingSenderId: "54788361679",
+            appId: "1:54788361679:web:477cd3f4d4553283d6d6ba",
+            measurementId: "G-1Y4HH7F10F"
+        };
+
+        // WhatsApp padrão do barbeiro (será sobrescrito pela configuração do Firestore)
+        let WHATSAPP_BARBEIRO = "55XXXXXXXXXXX";
+
+        // URL base para gerar links de aprovação
+        const BASE_APP_URL = window.location.origin + window.location.pathname;
+
+        // PIN de acesso administrativo
+        // AVISO DE SEGURANÇA: Este PIN é apenas uma barreira visual/local.
+        // Para produção real, utilize Firebase Authentication com Firestore Security Rules.
+        // Nunca confie apenas em validação client-side para proteger dados administrativos.
+        const ADMIN_PIN = "0192";
+
+        // ============================================
+        // FIREBASE
+        // ============================================
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+        import {
+            getFirestore, collection, addDoc, getDoc, getDocs, updateDoc, deleteDoc,
+            doc, query, where, orderBy, onSnapshot, serverTimestamp, setDoc
+        } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+        const app = initializeApp(FIREBASE_CONFIG);
+        const db = getFirestore(app);
+
+        // ============================================
+        // ESTADO GLOBAL
+        // ============================================
+
+        const state = {
+            // Configurações da barbearia
+            config: null,
+            // Serviços carregados
+            servicos: [],
+            // Horários por dia da semana
+            horariosPorDia: {},
+            // Dias de funcionamento (0=dom, 1=seg, ... 6=sab)
+            diasFuncionamento: [1, 2, 3, 4, 5, 6],
+            // Booking flow
+            currentStep: 1,
+            selectedServico: null,
+            selectedData: null,
+            selectedHorario: null,
+            clienteNome: '',
+            clienteTelefone: '',
+            // Admin
+            adminFilterStatus: 'todos',
+            adminTab: 'dashboard',
+            // Approval
+            approvalDoc: null,
+            approvalId: null,
+            // Listeners (para limpeza)
+            unsubscribers: []
+        };
+
+        // Nomes dos dias em português
+        const DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        const DIAS_SEMANA_CURTO = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        const DIAS_KEY = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+        const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+        // ============================================
+        // INICIALIZAÇÃO
+        // ============================================
+
+        async function init() {
+            try {
+                // Detectar rota
+                const params = new URLSearchParams(window.location.search);
+                const action = params.get("action");
+                const appointmentId = params.get("id");
+                const isAdmin = params.get("admin") === "true";
+
+                // Carregar configuração da barbearia
+                await loadConfig();
+
+                // Determinar qual página mostrar
+                if (action === "aprovar" && appointmentId) {
+                    // Tela de aprovação
+                    showPage('approvalPage');
+                    await loadApproval(appointmentId);
+                } else if (isAdmin) {
+                    // Admin login
+                    showPage('adminLogin');
+                } else {
+                    // Página pública
+                    showPage('clientPage');
+                    await loadServicos();
+                    setupDateInput();
+                }
+
+                // Esconder loading
+                hideLoading();
+            } catch (error) {
+                console.error('Erro na inicialização:', error);
+                showToast('Erro ao carregar o sistema. Verifique a configuração do Firebase.', 'error');
+                hideLoading();
+            }
+        }
+
+        // ============================================
+        // CONFIGURAÇÕES DA BARBEARIA
+        // ============================================
+
+        // Configuração padrão (usada se o documento não existir no Firestore)
+        const DEFAULT_CONFIG = {
+            nome: "Barbearia Premium",
+            slogan: "Seu estilo começa aqui.",
+            descricao: "Cortes modernos e atendimento de qualidade.",
+            whatsapp: "5586999999999",
+            logoUrl: "",
+            instagram: "",
+            instagramTexto: "Veja nossos cortes no Instagram",
+            corPrincipal: "#f59e0b",
+            horarioInicio: "17:00",
+            horarioFim: "21:00",
+            intervaloMinutos: 40,
+            diasFuncionamento: [1, 2, 3, 4, 5, 6],
+            mensagemConfirmacao: "Olá {nome}! 👋\n\nSeu agendamento na {barbearia} foi confirmado! ✂️\n\n📅 Data: {data}\n⏰ Horário: {horario}\n✂️ Serviço: {servico}\n💰 Valor: {preco}\n\nTe esperamos! 🔥",
+            mensagemCancelamento: "Olá {nome}.\n\nInfelizmente não conseguimos confirmar seu horário de {data} às {horario}.\n\nPor favor, escolha outro horário disponível.\n\nPedimos desculpas pelo transtorno.",
+            mensagemNovoAgendamento: "✂️ NOVO AGENDAMENTO\n\n👤 Cliente: {nome}\n📱 WhatsApp: {telefone}\n\n✂️ Serviço: {servico}\n💰 Valor: {preco}\n\n📅 Data: {data}\n⏰ Horário: {horario}\n\n⚠️ Status: AGUARDANDO CONFIRMAÇÃO\n\n👇 APROVAR AGENDAMENTO:\n{link}",
+            horariosPorDia: {
+                domingo: [],
+                segunda: ["17:00", "17:40", "18:20", "19:00", "19:40", "20:20", "21:00"],
+                terca: ["17:00", "17:40", "18:20", "19:00", "19:40", "20:20", "21:00"],
+                quarta: ["17:00", "17:40", "18:20", "19:00", "19:40", "20:20", "21:00"],
+                quinta: ["17:00", "17:40", "18:20", "19:00", "19:40", "20:20", "21:00"],
+                sexta: ["17:00", "17:40", "18:20", "19:00", "19:40", "20:20", "21:00"],
+                sabado: ["08:00", "08:40", "09:20", "10:00", "10:40", "11:20"],
+            }
+        };
+
+        async function loadConfig() {
+            const docRef = doc(db, "configuracoes", "barbearia");
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                state.config = { ...DEFAULT_CONFIG, ...docSnap.data() };
+            } else {
+                // Documento não existe, criar com configuração padrão
+                state.config = { ...DEFAULT_CONFIG };
+                try {
+                    await setDoc(docRef, { ...DEFAULT_CONFIG, atualizadoEm: serverTimestamp() });
+                } catch (e) {
+                    console.warn('Não foi possível criar configuração padrão:', e);
+                }
+            }
+
+            // Atualizar estado
+            state.diasFuncionamento = state.config.diasFuncionamento || [1, 2, 3, 4, 5, 6];
+            state.horariosPorDia = state.config.horariosPorDia || DEFAULT_CONFIG.horariosPorDia;
+            WHATSAPP_BARBEIRO = state.config.whatsapp || WHATSAPP_BARBEIRO;
+
+            // Aplicar personalização visual
+            applyBranding();
+        }
+
+        function applyBranding() {
+            const cfg = state.config;
+            if (!cfg) return;
+
+            // Cor principal
+            const cor = cfg.corPrincipal || '#f59e0b';
+            document.documentElement.style.setProperty('--brand-color', cor);
+            document.documentElement.style.setProperty('--brand-color-light', lightenColor(cor, 20));
+            document.documentElement.style.setProperty('--brand-color-dark', darkenColor(cor, 15));
+
+            // Meta theme-color
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.content = '#09090b';
+
+            // Hero
+            const heroNome = document.getElementById('heroNome');
+            const heroSlogan = document.getElementById('heroSlogan');
+            const heroDescricao = document.getElementById('heroDescricao');
+            const footerNome = document.getElementById('footerNome');
+
+            if (heroNome) heroNome.textContent = cfg.nome || 'Barbearia Premium';
+            if (heroSlogan) heroSlogan.textContent = cfg.slogan || 'Seu estilo começa aqui.';
+            if (heroDescricao) heroDescricao.textContent = cfg.descricao || 'Agende seu horário de forma rápida e fácil.';
+            if (footerNome) footerNome.textContent = cfg.nome || 'Barbearia Premium';
+
+            // Title da página
+            document.title = `${cfg.nome || 'Barbearia'} - Agende seu horário`;
+
+            // Logo personalizado
+            const heroLogo = document.getElementById('heroLogo');
+            if (heroLogo && cfg.logoUrl) {
+                heroLogo.innerHTML = `<img src="${cfg.logoUrl}" alt="${cfg.nome}" class="w-20 h-20 rounded-2xl object-cover border border-zinc-800 shadow-lg" onerror="this.parentElement.innerHTML='<div class=\\'w-20 h-20 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-lg\\'><svg width=\\'40\\' height=\\'40\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\' class=\\'text-brand-dynamic\\'><path d=\\'M6 3v18M6 3c2 2 6 2 6 0M6 9c2 2 6 2 6 0M6 15c2 2 6 2 6 0M18 3v18M18 3c-2 2-6 2-6 0M18 9c-2 2-6 2-6 0M18 15c-2 2-6 2-6 0\\' stroke-linecap=\\'round\\'/></svg></div>'">`;
+            }
+
+            // Instagram
+            const heroInstagram = document.getElementById('heroInstagram');
+            const heroInstaLink = document.getElementById('heroInstaLink');
+            const heroInstaTexto = document.getElementById('heroInstaTexto');
+            if (heroInstagram && cfg.instagram) {
+                const instaUser = cfg.instagram.replace(/^@/, '').replace(/\s/g, '');
+                if (instaUser) {
+                    heroInstagram.classList.remove('hidden');
+                    heroInstaLink.href = `https://instagram.com/${instaUser}`;
+                    if (heroInstaTexto && cfg.instagramTexto) {
+                        heroInstaTexto.textContent = cfg.instagramTexto;
+                    }
+                } else {
+                    heroInstagram.classList.add('hidden');
+                }
+            } else if (heroInstagram) {
+                heroInstagram.classList.add('hidden');
+            }
+
+            // Footer ano
+            const footerAno = document.getElementById('footerAno');
+            if (footerAno) footerAno.textContent = new Date().getFullYear();
+        }
+
+        // ============================================
+        // SERVIÇOS
+        // ============================================
+
+        async function loadServicos() {
+            try {
+                const q = query(collection(db, "servicos"), orderBy("ordem"));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    // Criar serviços padrão se não existirem
+                    await createDefaultServicos();
+                    return loadServicos();
+                }
+
+                state.servicos = [];
+                snapshot.forEach(docSnap => {
+                    state.servicos.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                renderServicosCliente();
+            } catch (error) {
+                console.error('Erro ao carregar serviços:', error);
+                showToast('Erro ao carregar serviços.', 'error');
+            }
+        }
+
+        async function createDefaultServicos() {
+            const defaults = [
+                { nome: "Corte", descricao: "Corte masculino tradicional ou moderno.", preco: 25, duracao: 40, ativo: true, ordem: 1 },
+                { nome: "Barba", descricao: "Barba feita com navalha e toalha quente.", preco: 15, duracao: 20, ativo: true, ordem: 2 },
+                { nome: "Combo Corte + Barba", descricao: "Corte completo e barba alinhada.", preco: 35, duracao: 60, ativo: true, ordem: 3 }
+            ];
+
+            for (const s of defaults) {
+                await addDoc(collection(db, "servicos"), { ...s, criadoEm: serverTimestamp() });
+            }
+        }
+
+        function renderServicosCliente() {
+            const container = document.getElementById('servicosList');
+            if (!container) return;
+
+            const servicosAtivos = state.servicos.filter(s => s.ativo);
+
+            if (servicosAtivos.length === 0) {
+                container.innerHTML = '<p class="text-zinc-500 text-center py-4">Nenhum serviço disponível no momento.</p>';
+                return;
+            }
+
+            container.innerHTML = servicosAtivos.map(s => `
+                <button onclick="selectServico('${s.id}')" id="servico-${s.id}"
+                    class="w-full text-left p-4 rounded-xl border transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]
+                    ${state.selectedServico?.id === s.id
+                        ? 'bg-brand-dynamic/10 border-brand-dynamic/50 ring-1 ring-brand-dynamic/30'
+                        : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'}">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-brand-dynamic shrink-0"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12L12 12"/><path d="M20 4L8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8L20 20"/></svg>
+                                <h3 class="font-semibold text-white">${escapeHtml(s.nome)}</h3>
+                            </div>
+                            <p class="text-zinc-400 text-sm mb-2">${escapeHtml(s.descricao || '')}</p>
+                            <div class="flex items-center gap-3">
+                                <span class="text-brand-dynamic font-bold">${formatCurrency(s.preco)}</span>
+                                <span class="text-zinc-500 text-sm">${s.duracao} min</span>
+                            </div>
+                        </div>
+                        <div class="shrink-0 ml-3">
+                            <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition
+                                ${state.selectedServico?.id === s.id
+                                    ? 'border-brand-dynamic bg-brand-dynamic'
+                                    : 'border-zinc-600'}">
+                                ${state.selectedServico?.id === s.id
+                                    ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#09090b" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>'
+                                    : ''}
+                            </div>
+                        </div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        // ============================================
+        // HORÁRIOS
+        // ============================================
+
+        function getHorariosForDate(dateStr) {
+            const date = new Date(dateStr + 'T12:00:00');
+            const dayOfWeek = date.getDay();
+            const dayKey = DIAS_KEY[dayOfWeek];
+            return (state.horariosPorDia[dayKey] || []).sort();
+        }
+
+        async function loadHorariosForDate(dateStr) {
+            const container = document.getElementById('horariosGrid');
+            const loading = document.getElementById('horariosLoading');
+            const semHorarios = document.getElementById('semHorarios');
+            const resumo = document.getElementById('resumoBooking');
+            const btnConfirmar = document.getElementById('btnConfirmar');
+
+            container.innerHTML = '';
+            semHorarios.classList.add('hidden');
+            resumo.classList.add('hidden');
+            btnConfirmar.classList.add('hidden');
+            loading.classList.remove('hidden');
+
+            state.selectedHorario = null;
+
+            try {
+                const horarios = getHorariosForDate(dateStr);
+
+                if (horarios.length === 0) {
+                    loading.classList.add('hidden');
+                    semHorarios.classList.remove('hidden');
+                    return;
+                }
+
+                // Buscar agendamentos para a data selecionada
+                const q = query(
+                    collection(db, "agendamentos"),
+                    where("data", "==", dateStr)
+                );
+                const snapshot = await getDocs(q);
+
+                const ocupados = new Set();
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    // Somente pendentes e confirmados bloqueiam o horário
+                    if (data.status === 'pendente' || data.status === 'confirmado') {
+                        ocupados.add(data.horario);
+                    }
+                });
+
+                // Verificar se é hoje para desabilitar horários passados
+                const agora = new Date();
+                const hoje = formatDateISO(agora);
+                const isHoje = dateStr === hoje;
+
+                loading.classList.add('hidden');
+
+                container.innerHTML = horarios.map(h => {
+                    const isOcupado = ocupados.has(h);
+                    let isPassado = false;
+
+                    if (isHoje) {
+                        const [hh, mm] = h.split(':').map(Number);
+                        const horarioDate = new Date();
+                        horarioDate.setHours(hh, mm, 0, 0);
+                        isPassado = horarioDate <= agora;
+                    }
+
+                    if (isOcupado) {
+                        return `<button disabled class="py-3 px-2 rounded-xl bg-zinc-900/50 border border-zinc-800/50 text-zinc-600 text-sm font-medium cursor-not-allowed">
+                            <span class="block text-xs">OCUPADO</span>
+                            <span class="line-through">${h}</span>
+                        </button>`;
+                    }
+                    if (isPassado) {
+                        return `<button disabled class="py-3 px-2 rounded-xl bg-zinc-900/50 border border-zinc-800/50 text-zinc-600 text-sm font-medium cursor-not-allowed">
+                            <span class="block text-xs">ENCERRADO</span>
+                            <span class="line-through">${h}</span>
+                        </button>`;
+                    }
+
+                    return `<button onclick="selectHorario('${h}')" id="horario-${h.replace(':', '')}"
+                        class="py-3 px-2 rounded-xl border text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
+                        bg-zinc-900 border-zinc-700 text-white hover:border-brand-dynamic/50">
+                        ${h}
+                    </button>`;
+                }).join('');
+
+                // Se todos os horários estão indisponíveis
+                const disponiveis = horarios.filter(h => !ocupados.has(h));
+                if (isHoje) {
+                    const agoraTime = agora.getTime();
+                    const realmente = disponiveis.filter(h => {
+                        const [hh, mm] = h.split(':').map(Number);
+                        const d = new Date();
+                        d.setHours(hh, mm, 0, 0);
+                        return d.getTime() > agoraTime;
+                    });
+                    if (realmente.length === 0 && horarios.length > 0) {
+                        semHorarios.querySelector('p').textContent = 'Todos os horários de hoje já encerraram ou estão ocupados.';
+                        semHorarios.classList.remove('hidden');
+                    }
+                }
+
+            } catch (error) {
+                console.error('Erro ao carregar horários:', error);
+                loading.classList.add('hidden');
+                showToast('Erro ao carregar horários.', 'error');
+            }
+        }
+
+        // ============================================
+        // BOOKING FLOW - NAVEGAÇÃO
+        // ============================================
+
+        // Expor funções ao escopo global para onclick handlers
+        window.startBooking = function() {
+            document.getElementById('bookingSection').classList.remove('hidden');
+            document.getElementById('heroSection').style.display = 'none';
+            document.getElementById('step1').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        window.goBackStep = function() {
+            if (state.currentStep > 1) {
+                goToStep(state.currentStep - 1);
+            }
+        };
+
+        window.goToStep = function(step) {
+            // Validação antes de avançar
+            if (step > state.currentStep) {
+                if (state.currentStep === 1 && !validateStep1()) return;
+                if (state.currentStep === 2 && !validateStep2()) return;
+                if (state.currentStep === 3 && !validateStep3()) return;
+            }
+
+            // Esconder todos os steps
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById('step' + i);
+                if (el) el.classList.add('hidden');
+            }
+            document.getElementById('stepSucesso').classList.add('hidden');
+
+            // Mostrar step atual
+            const stepEl = document.getElementById('step' + step);
+            if (stepEl) {
+                stepEl.classList.remove('hidden');
+                stepEl.classList.add('animate-fade-in-up');
+            }
+
+            state.currentStep = step;
+
+            // Atualizar progress bar
+            const progress = (step / 4) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('stepLabel').textContent = `Etapa ${step} de 4`;
+
+            // Mostrar/esconder botão voltar
+            const btnVoltar = document.getElementById('btnVoltar');
+            if (step > 1) {
+                btnVoltar.classList.remove('hidden');
+            } else {
+                btnVoltar.classList.add('hidden');
+            }
+
+            // Ações específicas do step
+            if (step === 2) {
+                renderServicosCliente();
+            } else if (step === 4 && state.selectedData) {
+                loadHorariosForDate(state.selectedData);
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        function validateStep1() {
+            const nome = document.getElementById('inputNome').value.trim();
+            const telefone = document.getElementById('inputTelefone').value.trim();
+
+            if (!nome) {
+                showToast('Por favor, digite seu nome.', 'warning');
+                document.getElementById('inputNome').focus();
+                return false;
+            }
+            if (nome.length < 2) {
+                showToast('Nome muito curto.', 'warning');
+                document.getElementById('inputNome').focus();
+                return false;
+            }
+            if (!telefone || telefone.replace(/\D/g, '').length < 10) {
+                showToast('Por favor, digite um telefone válido.', 'warning');
+                document.getElementById('inputTelefone').focus();
+                return false;
+            }
+
+            state.clienteNome = nome;
+            state.clienteTelefone = telefone.replace(/\D/g, '');
+            return true;
+        }
+
+        function validateStep2() {
+            if (!state.selectedServico) {
+                showToast('Por favor, selecione um serviço.', 'warning');
+                return false;
+            }
+            return true;
+        }
+
+        function validateStep3() {
+            if (!state.selectedData) {
+                showToast('Por favor, selecione uma data.', 'warning');
+                return false;
+            }
+            return true;
+        }
+
+        // ============================================
+        // SELEÇÕES DO CLIENTE
+        // ============================================
+
+        window.selectServico = function(id) {
+            state.selectedServico = state.servicos.find(s => s.id === id);
+            renderServicosCliente();
+            const btn = document.getElementById('btnStep2');
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        };
+
+        window.selectHorario = function(horario) {
+            state.selectedHorario = horario;
+
+            // Atualizar visual dos botões
+            document.querySelectorAll('#horariosGrid button:not([disabled])').forEach(btn => {
+                btn.className = 'py-3 px-2 rounded-xl border text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] bg-zinc-900 border-zinc-700 text-white hover:border-brand-dynamic/50';
+            });
+
+            const selected = document.getElementById('horario-' + horario.replace(':', ''));
+            if (selected) {
+                selected.className = 'py-3 px-2 rounded-xl border text-sm font-semibold transition-all duration-200 bg-brand-dynamic border-brand-dynamic text-zinc-950 scale-[1.02]';
+            }
+
+            // Mostrar resumo
+            const resumo = document.getElementById('resumoBooking');
+            const btnConfirmar = document.getElementById('btnConfirmar');
+            resumo.classList.remove('hidden');
+            btnConfirmar.classList.remove('hidden');
+            btnConfirmar.disabled = false;
+            btnConfirmar.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            // Preencher resumo
+            document.getElementById('resumoNome').textContent = state.clienteNome;
+            document.getElementById('resumoTelefone').textContent = formatPhone(state.clienteTelefone);
+            document.getElementById('resumoServico').textContent = state.selectedServico.nome;
+            document.getElementById('resumoPreco').textContent = formatCurrency(state.selectedServico.preco);
+            document.getElementById('resumoData').textContent = formatDateFriendly(state.selectedData);
+            document.getElementById('resumoHorario').textContent = horario;
+        };
+
+        // ============================================
+        // DATA INPUT
+        // ============================================
+
+        function setupDateInput() {
+            const inputData = document.getElementById('inputData');
+            if (!inputData) return;
+
+            // Data mínima = hoje
+            const hoje = formatDateISO(new Date());
+            inputData.min = hoje;
+            inputData.value = '';
+
+            inputData.addEventListener('change', function() {
+                const val = this.value;
+                const dataAlerta = document.getElementById('dataAlerta');
+                const dataInfo = document.getElementById('dataInfo');
+                const btnStep3 = document.getElementById('btnStep3');
+
+                if (!val) {
+                    dataAlerta.classList.add('hidden');
+                    dataInfo.classList.add('hidden');
+                    btnStep3.disabled = true;
+                    btnStep3.classList.add('opacity-50', 'cursor-not-allowed');
+                    state.selectedData = null;
+                    return;
+                }
+
+                const date = new Date(val + 'T12:00:00');
+                const dayOfWeek = date.getDay();
+
+                // Verificar se a barbearia funciona neste dia
+                if (!state.diasFuncionamento.includes(dayOfWeek)) {
+                    dataAlerta.classList.remove('hidden');
+                    dataInfo.classList.add('hidden');
+                    btnStep3.disabled = true;
+                    btnStep3.classList.add('opacity-50', 'cursor-not-allowed');
+                    state.selectedData = null;
+                    return;
+                }
+
+                dataAlerta.classList.add('hidden');
+                dataInfo.classList.remove('hidden');
+
+                const dayName = DIAS_SEMANA[dayOfWeek];
+                const day = date.getDate();
+                const month = MESES[date.getMonth()];
+
+                document.getElementById('dataInfoText').textContent = dayName;
+                document.getElementById('dataInfoSub').textContent = `${day} de ${month}`;
+
+                state.selectedData = val;
+                btnStep3.disabled = false;
+                btnStep3.classList.remove('opacity-50', 'cursor-not-allowed');
+            });
+        }
+
+        // ============================================
+        // CRIAÇÃO DO AGENDAMENTO
+        // ============================================
+
+        window.criarAgendamento = async function() {
+            const btnText = document.getElementById('btnConfirmarText');
+            const btnLoading = document.getElementById('btnConfirmarLoading');
+            const btnConfirmar = document.getElementById('btnConfirmar');
+
+            // Desabilitar botão
+            btnConfirmar.disabled = true;
+            btnText.classList.add('hidden');
+            btnLoading.classList.remove('hidden');
+
+            try {
+                // REVALIDAÇÃO: Verificar se o horário ainda está disponível
+                // NOTA DE SEGURANÇA: Para garantir exclusividade absoluta em produção,
+                // utilize Cloud Functions com Firestore Transactions ou um mecanismo
+                // de lock server-side. A verificação client-side pode sofrer race conditions
+                // em cenários de alta concorrência.
+                const q = query(
+                    collection(db, "agendamentos"),
+                    where("data", "==", state.selectedData),
+                    where("horario", "==", state.selectedHorario)
+                );
+                const snapshot = await getDocs(q);
+
+                let ocupado = false;
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data.status === 'pendente' || data.status === 'confirmado') {
+                        ocupado = true;
+                    }
+                });
+
+                if (ocupado) {
+                    showToast('Esse horário acabou de ser reservado. Escolha outro horário.', 'error');
+                    btnConfirmar.disabled = false;
+                    btnText.classList.remove('hidden');
+                    btnLoading.classList.add('hidden');
+                    // Recarregar horários
+                    await loadHorariosForDate(state.selectedData);
+                    return;
+                }
+
+                // Criar o agendamento
+                const docRef = await addDoc(collection(db, "agendamentos"), {
+                    clienteNome: state.clienteNome,
+                    clienteTelefone: state.clienteTelefone,
+                    servico: state.selectedServico.nome,
+                    preco: state.selectedServico.preco,
+                    data: state.selectedData,
+                    horario: state.selectedHorario,
+                    status: "pendente",
+                    criadoEm: serverTimestamp()
+                });
+
+                // Gerar link de aprovação
+                const linkAprovacao = `${BASE_APP_URL}?action=aprovar&id=${docRef.id}`;
+
+                // Mostrar sucesso
+                showBookingSuccess();
+
+                // Montar mensagem para WhatsApp
+                const dataFormatada = formatDateBR(state.selectedData);
+                const msg = (state.config.mensagemNovoAgendamento || DEFAULT_CONFIG.mensagemNovoAgendamento)
+                    .replace(/{nome}/g, state.clienteNome)
+                    .replace(/{telefone}/g, formatPhone(state.clienteTelefone))
+                    .replace(/{servico}/g, state.selectedServico.nome)
+                    .replace(/{preco}/g, formatCurrency(state.selectedServico.preco))
+                    .replace(/{data}/g, dataFormatada)
+                    .replace(/{horario}/g, state.selectedHorario)
+                    .replace(/{barbearia}/g, state.config.nome || 'Barbearia')
+                    .replace(/{link}/g, linkAprovacao);
+
+                // Abrir WhatsApp
+                const whatsappUrl = `https://wa.me/${WHATSAPP_BARBEIRO}?text=${encodeURIComponent(msg)}`;
+
+                // Pequeno delay para o usuário ver a tela de sucesso
+                setTimeout(() => {
+                    window.open(whatsappUrl, '_blank');
+                }, 800);
+
+            } catch (error) {
+                console.error('Erro ao criar agendamento:', error);
+                showToast('Erro ao criar agendamento. Tente novamente.', 'error');
+                btnConfirmar.disabled = false;
+                btnText.classList.remove('hidden');
+                btnLoading.classList.add('hidden');
+            }
+        };
+
+        function showBookingSuccess() {
+            // Esconder steps
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById('step' + i);
+                if (el) el.classList.add('hidden');
+            }
+            document.getElementById('btnVoltar').classList.add('hidden');
+            document.getElementById('stepLabel').textContent = 'Concluído!';
+            document.getElementById('progressBar').style.width = '100%';
+
+            // Mostrar sucesso
+            const sucesso = document.getElementById('stepSucesso');
+            sucesso.classList.remove('hidden');
+
+            document.getElementById('sucessoServico').textContent = state.selectedServico.nome;
+            document.getElementById('sucessoData').textContent = formatDateFriendly(state.selectedData);
+            document.getElementById('sucessoHorario').textContent = state.selectedHorario;
+        }
+
+        window.resetBooking = function() {
+            state.currentStep = 1;
+            state.selectedServico = null;
+            state.selectedData = null;
+            state.selectedHorario = null;
+
+            document.getElementById('inputNome').value = '';
+            document.getElementById('inputTelefone').value = '';
+            document.getElementById('inputData').value = '';
+
+            document.getElementById('bookingSection').classList.add('hidden');
+            document.getElementById('heroSection').style.display = '';
+            document.getElementById('stepSucesso').classList.add('hidden');
+
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById('step' + i);
+                if (el) el.classList.add('hidden');
+            }
+            document.getElementById('step1').classList.remove('hidden');
+
+            document.getElementById('progressBar').style.width = '25%';
+            document.getElementById('stepLabel').textContent = 'Etapa 1 de 4';
+            document.getElementById('btnVoltar').classList.add('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // ============================================
+        // APROVAÇÃO
+        // ============================================
+
+        async function loadApproval(appointmentId) {
+            state.approvalId = appointmentId;
+
+            try {
+                const docRef = doc(db, "agendamentos", appointmentId);
+                const docSnap = await getDoc(docRef);
+
+                if (!docSnap.exists()) {
+                    document.getElementById('approvalLoading').classList.add('hidden');
+                    document.getElementById('approvalError').classList.remove('hidden');
+                    return;
+                }
+
+                state.approvalDoc = { id: docSnap.id, ...docSnap.data() };
+                renderApproval();
+
+            } catch (error) {
+                console.error('Erro ao carregar aprovação:', error);
+                document.getElementById('approvalLoading').classList.add('hidden');
+                document.getElementById('approvalError').classList.remove('hidden');
+            }
+        }
+
+        function renderApproval() {
+            const d = state.approvalDoc;
+            document.getElementById('approvalLoading').classList.add('hidden');
+            document.getElementById('approvalDetails').classList.remove('hidden');
+
+            document.getElementById('approvalNome').textContent = d.clienteNome;
+            document.getElementById('approvalTelefone').textContent = formatPhone(d.clienteTelefone);
+            document.getElementById('approvalServico').textContent = d.servico;
+            document.getElementById('approvalPreco').textContent = formatCurrency(d.preco);
+            document.getElementById('approvalData').textContent = formatDateBR(d.data);
+            document.getElementById('approvalHorario').textContent = d.horario;
+
+            // Status
+            const statusEl = document.getElementById('approvalStatus');
+            const actions = document.getElementById('approvalActions');
+            const result = document.getElementById('approvalResult');
+
+            if (d.status === 'pendente') {
+                statusEl.innerHTML = '<span class="text-yellow-400">⏳ PENDENTE</span>';
+                actions.classList.remove('hidden');
+                result.classList.add('hidden');
+            } else if (d.status === 'confirmado') {
+                statusEl.innerHTML = '<span class="text-green-400">✓ CONFIRMADO</span>';
+                actions.classList.add('hidden');
+                result.classList.add('hidden');
+            } else if (d.status === 'cancelado') {
+                statusEl.innerHTML = '<span class="text-red-400">✕ CANCELADO</span>';
+                actions.classList.add('hidden');
+                result.classList.add('hidden');
+            }
+        }
+
+        window.aprovarAgendamento = async function() {
+            const btn = document.getElementById('btnAprovar');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Aprovando...';
+
+            try {
+                const docRef = doc(db, "agendamentos", state.approvalId);
+                await updateDoc(docRef, { status: "confirmado" });
+
+                state.approvalDoc.status = 'confirmado';
+
+                // Mostrar resultado
+                document.getElementById('approvalActions').classList.add('hidden');
+                document.getElementById('approvalStatus').innerHTML = '<span class="text-green-400">✓ CONFIRMADO</span>';
+
+                const result = document.getElementById('approvalResult');
+                result.classList.remove('hidden');
+
+                document.getElementById('approvalResultIcon').className = 'w-16 h-16 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mx-auto mb-4';
+                document.getElementById('approvalResultIcon').innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-green-500"><path d="M20 6L9 17l-5-5"/></svg>';
+                document.getElementById('approvalResultTitle').textContent = 'Agendamento Confirmado!';
+                document.getElementById('approvalResultTitle').className = 'text-xl font-bold mb-2 text-green-400';
+                document.getElementById('approvalResultDesc').textContent = `${state.approvalDoc.clienteNome} — ${state.approvalDoc.servico} — ${formatDateBR(state.approvalDoc.data)} às ${state.approvalDoc.horario}`;
+                document.getElementById('btnAvisarCliente').textContent = 'AVISAR CLIENTE NO WHATSAPP';
+                document.getElementById('btnAvisarCliente').className = 'w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2';
+
+                showToast('Agendamento confirmado com sucesso!', 'success');
+
+            } catch (error) {
+                console.error('Erro ao aprovar:', error);
+                showToast('Erro ao aprovar agendamento.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> APROVAR AGENDAMENTO';
+            }
+        };
+
+        window.recusarAgendamento = async function() {
+            if (!confirm('Tem certeza que deseja cancelar este agendamento?')) return;
+
+            try {
+                const docRef = doc(db, "agendamentos", state.approvalId);
+                await updateDoc(docRef, { status: "cancelado" });
+
+                state.approvalDoc.status = 'cancelado';
+
+                // Mostrar resultado
+                document.getElementById('approvalActions').classList.add('hidden');
+                document.getElementById('approvalStatus').innerHTML = '<span class="text-red-400">✕ CANCELADO</span>';
+
+                const result = document.getElementById('approvalResult');
+                result.classList.remove('hidden');
+
+                document.getElementById('approvalResultIcon').className = 'w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mx-auto mb-4';
+                document.getElementById('approvalResultIcon').innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-500"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+                document.getElementById('approvalResultTitle').textContent = 'Agendamento Cancelado';
+                document.getElementById('approvalResultTitle').className = 'text-xl font-bold mb-2 text-red-400';
+                document.getElementById('approvalResultDesc').textContent = `${state.approvalDoc.clienteNome} — ${state.approvalDoc.servico} — ${formatDateBR(state.approvalDoc.data)} às ${state.approvalDoc.horario}`;
+                document.getElementById('btnAvisarCliente').textContent = 'AVISAR CLIENTE';
+                document.getElementById('btnAvisarCliente').className = 'w-full bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-3.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2';
+
+                showToast('Agendamento cancelado.', 'info');
+
+            } catch (error) {
+                console.error('Erro ao recusar:', error);
+                showToast('Erro ao cancelar agendamento.', 'error');
+            }
+        };
+
+        window.avisarCliente = function() {
+            const d = state.approvalDoc;
+            const cfg = state.config;
+            let msg;
+
+            if (d.status === 'confirmado') {
+                msg = (cfg.mensagemConfirmacao || DEFAULT_CONFIG.mensagemConfirmacao)
+                    .replace(/{nome}/g, d.clienteNome)
+                    .replace(/{servico}/g, d.servico)
+                    .replace(/{preco}/g, formatCurrency(d.preco))
+                    .replace(/{data}/g, formatDateBR(d.data))
+                    .replace(/{horario}/g, d.horario)
+                    .replace(/{barbearia}/g, cfg.nome || 'Barbearia');
+            } else {
+                msg = (cfg.mensagemCancelamento || DEFAULT_CONFIG.mensagemCancelamento)
+                    .replace(/{nome}/g, d.clienteNome)
+                    .replace(/{servico}/g, d.servico)
+                    .replace(/{preco}/g, formatCurrency(d.preco))
+                    .replace(/{data}/g, formatDateBR(d.data))
+                    .replace(/{horario}/g, d.horario)
+                    .replace(/{barbearia}/g, cfg.nome || 'Barbearia');
+            }
+
+            const url = `https://wa.me/55${d.clienteTelefone}?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+        };
+
+        // ============================================
+        // ADMIN - LOGIN
+        // ============================================
+
+        window.showAdminLogin = function() {
+            window.history.pushState({}, '', '?admin=true');
+            showPage('adminLogin');
+            document.getElementById('inputPin').value = '';
+            document.getElementById('pinError').classList.add('hidden');
+            document.getElementById('inputPin').focus();
+        };
+
+        window.verificarPin = function() {
+            const pin = document.getElementById('inputPin').value;
+
+            if (pin === ADMIN_PIN) {
+                document.getElementById('pinError').classList.add('hidden');
+                showPage('adminPanel');
+                initAdmin();
+            } else {
+                document.getElementById('pinError').classList.remove('hidden');
+                document.getElementById('inputPin').value = '';
+                document.getElementById('inputPin').focus();
+            }
+        };
+
+        window.logoutAdmin = function() {
+            // Limpar listeners
+            state.unsubscribers.forEach(unsub => unsub());
+            state.unsubscribers = [];
+            window.history.pushState({}, '', BASE_APP_URL);
+            showPage('clientPage');
+        };
+
+        window.goToClient = function() {
+            state.unsubscribers.forEach(unsub => unsub());
+            state.unsubscribers = [];
+            window.history.pushState({}, '', BASE_APP_URL);
+            showPage('clientPage');
+            loadServicos();
+        };
+
+        // ============================================
+        // ADMIN - INICIALIZAÇÃO
+        // ============================================
+
+        async function initAdmin() {
+            // Carregar config atualizada
+            await loadConfig();
+            // Carregar serviços
+            await loadServicos();
+            // Mostrar dashboard por padrão
+            showAdminTab('dashboard');
+            // Carregar dados do dashboard
+            await loadDashboard();
+        }
+
+        window.showAdminTab = function(tab) {
+            state.adminTab = tab;
+
+            // Esconder todas as tabs
+            document.querySelectorAll('.admin-content').forEach(el => el.classList.add('hidden'));
+
+            // Mostrar tab selecionada
+            const tabEl = document.getElementById('tab' + capitalize(tab));
+            if (tabEl) {
+                tabEl.classList.remove('hidden');
+                tabEl.classList.add('animate-fade-in');
+            }
+
+            // Atualizar estilo dos botões
+            document.querySelectorAll('.admin-tab').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('text-zinc-400', 'hover:text-white', 'hover:bg-zinc-800');
+            });
+            const activeBtn = document.querySelector(`.admin-tab[data-tab="${tab}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.classList.remove('text-zinc-400', 'hover:text-white', 'hover:bg-zinc-800');
+            }
+
+            // Carregar conteúdo da tab
+            if (tab === 'dashboard') loadDashboard();
+            else if (tab === 'agendamentos') loadAdminAgendamentos();
+            else if (tab === 'servicos') loadAdminServicos();
+            else if (tab === 'horarios') loadAdminHorarios();
+            else if (tab === 'personalizar') loadAdminPersonalizar();
+            else if (tab === 'mensagens') loadAdminMensagens();
+        };
+
+        // ============================================
+        // ADMIN - DASHBOARD
+        // ============================================
+
+        async function loadDashboard() {
+            const hoje = formatDateISO(new Date());
+
+            try {
+                const q = query(
+                    collection(db, "agendamentos"),
+                    where("data", "==", hoje)
+                );
+                const snapshot = await getDocs(q);
+
+                let total = 0, confirmados = 0, pendentes = 0, cancelados = 0, faturamento = 0;
+                const agendamentos = [];
+
+                snapshot.forEach(docSnap => {
+                    const d = docSnap.data();
+                    total++;
+                    if (d.status === 'confirmado') { confirmados++; faturamento += (d.preco || 0); }
+                    else if (d.status === 'pendente') { pendentes++; faturamento += (d.preco || 0); }
+                    else if (d.status === 'cancelado') cancelados++;
+                    agendamentos.push({ id: docSnap.id, ...d });
+                });
+
+                document.getElementById('statTotal').textContent = total;
+                document.getElementById('statConfirmados').textContent = confirmados;
+                document.getElementById('statPendentes').textContent = pendentes;
+                document.getElementById('statCancelados').textContent = cancelados;
+                document.getElementById('statFaturamento').textContent = formatCurrency(faturamento);
+
+                // Próximo cliente
+                const agora = new Date();
+                const horaAtual = `${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`;
+
+                const proximos = agendamentos
+                    .filter(a => (a.status === 'confirmado' || a.status === 'pendente') && a.horario >= horaAtual)
+                    .sort((a, b) => a.horario.localeCompare(b.horario));
+
+                if (proximos.length > 0) {
+                    document.getElementById('statProximo').textContent = `${proximos[0].clienteNome} — ${proximos[0].horario}`;
+                } else {
+                    document.getElementById('statProximo').textContent = '—';
+                }
+
+                // Lista rápida
+                const listEl = document.getElementById('dashboardHojeList');
+                const ativos = agendamentos
+                    .filter(a => a.status !== 'cancelado')
+                    .sort((a, b) => a.horario.localeCompare(b.horario));
+
+                if (ativos.length === 0) {
+                    listEl.innerHTML = '<p class="text-zinc-600 text-sm">Nenhum agendamento hoje.</p>';
+                } else {
+                    listEl.innerHTML = ativos.map(a => `
+                        <div class="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
+                            <div class="flex items-center gap-3">
+                                <span class="text-brand-dynamic font-mono font-semibold text-sm">${a.horario}</span>
+                                <div>
+                                    <p class="text-sm font-medium">${escapeHtml(a.clienteNome)}</p>
+                                    <p class="text-xs text-zinc-500">${escapeHtml(a.servico)} • ${formatCurrency(a.preco)}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-medium px-2 py-1 rounded-md ${getStatusBadgeClass(a.status)}">${getStatusLabel(a.status)}</span>
+                        </div>
+                    `).join('');
+                }
+
+            } catch (error) {
+                console.error('Erro ao carregar dashboard:', error);
+            }
+        }
+
+        // ============================================
+        // ADMIN - AGENDAMENTOS
+        // ============================================
+
+        window.loadAdminAgendamentos = async function() {
+            const dateInput = document.getElementById('adminFilterData');
+            if (!dateInput.value) {
+                dateInput.value = formatDateISO(new Date());
+            }
+
+            const dataSelecionada = dateInput.value;
+            const container = document.getElementById('adminAgendamentosList');
+            container.innerHTML = '<div class="flex justify-center py-8"><div class="spinner"></div></div>';
+
+            try {
+                const q = query(
+                    collection(db, "agendamentos"),
+                    where("data", "==", dataSelecionada)
+                );
+                const snapshot = await getDocs(q);
+
+                let agendamentos = [];
+                snapshot.forEach(docSnap => {
+                    agendamentos.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                // Aplicar filtro de status
+                if (state.adminFilterStatus !== 'todos') {
+                    agendamentos = agendamentos.filter(a => a.status === state.adminFilterStatus);
+                }
+
+                // Ordenar por horário
+                agendamentos.sort((a, b) => a.horario.localeCompare(b.horario));
+
+                if (agendamentos.length === 0) {
+                    container.innerHTML = '<p class="text-zinc-600 text-sm py-4 text-center">Nenhum agendamento encontrado.</p>';
+                    return;
+                }
+
+                container.innerHTML = agendamentos.map(a => `
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 animate-fade-in">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="text-brand-dynamic font-mono font-bold text-lg">${a.horario}</span>
+                                <div>
+                                    <p class="font-semibold">${escapeHtml(a.clienteNome)}</p>
+                                    <p class="text-sm text-zinc-400">${escapeHtml(a.servico)} • ${formatCurrency(a.preco)}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-medium px-2.5 py-1 rounded-lg ${getStatusBadgeClass(a.status)}">${getStatusLabel(a.status)}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-zinc-500 mb-3">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            ${formatPhone(a.clienteTelefone)}
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            ${a.status === 'pendente' ? `
+                                <button onclick="changeStatus('${a.id}', 'confirmado')" class="text-xs px-3 py-1.5 bg-green-600/20 text-green-400 rounded-lg hover:bg-green-600/30 transition font-medium">✓ Confirmar</button>
+                                <button onclick="changeStatus('${a.id}', 'cancelado')" class="text-xs px-3 py-1.5 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition font-medium">✕ Cancelar</button>
+                            ` : ''}
+                            ${a.status === 'confirmado' ? `
+                                <button onclick="changeStatus('${a.id}', 'cancelado')" class="text-xs px-3 py-1.5 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition font-medium">✕ Cancelar</button>
+                            ` : ''}
+                            ${a.status === 'cancelado' ? `
+                                <button onclick="changeStatus('${a.id}', 'pendente')" class="text-xs px-3 py-1.5 bg-yellow-600/20 text-yellow-400 rounded-lg hover:bg-yellow-600/30 transition font-medium">↺ Reabrir</button>
+                            ` : ''}
+                            <a href="https://wa.me/55${a.clienteTelefone}" target="_blank" class="text-xs px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition font-medium">💬 WhatsApp</a>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Erro ao carregar agendamentos:', error);
+                container.innerHTML = '<p class="text-red-400 text-sm py-4 text-center">Erro ao carregar agendamentos.</p>';
+            }
+        };
+
+        window.changeStatus = async function(id, novoStatus) {
+            if (novoStatus === 'cancelado') {
+                if (!confirm('Tem certeza que deseja cancelar este agendamento?')) return;
+            }
+
+            try {
+                await updateDoc(doc(db, "agendamentos", id), { status: novoStatus });
+                showToast(`Status alterado para ${getStatusLabel(novoStatus)}.`, 'success');
+                loadAdminAgendamentos();
+                if (state.adminTab === 'dashboard') loadDashboard();
+            } catch (error) {
+                console.error('Erro ao alterar status:', error);
+                showToast('Erro ao alterar status.', 'error');
+            }
+        };
+
+        window.filterStatus = function(status) {
+            state.adminFilterStatus = status;
+
+            document.querySelectorAll('.status-filter').forEach(btn => {
+                btn.classList.remove('bg-brand-dynamic', 'text-zinc-950');
+                btn.classList.add('bg-zinc-800', 'text-zinc-300');
+            });
+            const activeBtn = document.querySelector(`.status-filter[data-filter="${status}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-brand-dynamic', 'text-zinc-950');
+                activeBtn.classList.remove('bg-zinc-800', 'text-zinc-300');
+            }
+
+            loadAdminAgendamentos();
+        };
+
+        // ============================================
+        // ADMIN - SERVIÇOS
+        // ============================================
+
+        async function loadAdminServicos() {
+            const container = document.getElementById('adminServicosList');
+
+            try {
+                const q = query(collection(db, "servicos"), orderBy("ordem"));
+                const snapshot = await getDocs(q);
+
+                state.servicos = [];
+                snapshot.forEach(docSnap => {
+                    state.servicos.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                if (state.servicos.length === 0) {
+                    container.innerHTML = '<p class="text-zinc-600 text-sm">Nenhum serviço cadastrado.</p>';
+                    return;
+                }
+
+                container.innerHTML = state.servicos.map(s => `
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex items-center justify-between gap-4 ${!s.ativo ? 'opacity-50' : ''}">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-semibold truncate">${escapeHtml(s.nome)}</h3>
+                                ${!s.ativo ? '<span class="text-xs bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded">Inativo</span>' : ''}
+                            </div>
+                            <p class="text-sm text-zinc-400 truncate">${escapeHtml(s.descricao || '')}</p>
+                            <div class="flex items-center gap-3 mt-1">
+                                <span class="text-brand-dynamic font-semibold text-sm">${formatCurrency(s.preco)}</span>
+                                <span class="text-zinc-500 text-xs">${s.duracao} min</span>
+                                <span class="text-zinc-600 text-xs">Ordem: ${s.ordem}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <button onclick="openServiceModal('${s.id}')" class="text-xs px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition">Editar</button>
+                            <button onclick="toggleServico('${s.id}', ${s.ativo})" class="text-xs px-3 py-1.5 rounded-lg transition ${s.ativo ? 'bg-red-600/20 text-red-400 hover:bg-red-600/30' : 'bg-green-600/20 text-green-400 hover:bg-green-600/30'}">
+                                ${s.ativo ? 'Desativar' : 'Ativar'}
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Erro ao carregar serviços admin:', error);
+            }
+        }
+
+        window.openServiceModal = function(id) {
+            const servico = id ? state.servicos.find(s => s.id === id) : null;
+            const isEdit = !!servico;
+
+            const modal = document.getElementById('modalContent');
+            modal.innerHTML = `
+                <h3 class="text-lg font-bold mb-4">${isEdit ? 'Editar Serviço' : 'Novo Serviço'}</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Nome do serviço</label>
+                        <input type="text" id="modalServicoNome" value="${isEdit ? escapeHtml(servico.nome) : ''}" placeholder="Ex: Corte">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Descrição</label>
+                        <textarea id="modalServicoDesc" rows="2" class="resize-none" placeholder="Descrição do serviço">${isEdit ? escapeHtml(servico.descricao || '') : ''}</textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Preço (R$)</label>
+                            <input type="number" id="modalServicoPreco" value="${isEdit ? servico.preco : ''}" placeholder="25" min="0" step="0.01">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-300 mb-1.5">Duração (min)</label>
+                            <input type="number" id="modalServicoDuracao" value="${isEdit ? servico.duracao : ''}" placeholder="40" min="1">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-zinc-300 mb-1.5">Ordem</label>
+                        <input type="number" id="modalServicoOrdem" value="${isEdit ? servico.ordem : state.servicos.length + 1}" placeholder="1" min="1">
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div id="modalServicoAtivoToggle" class="toggle-switch ${isEdit ? (servico.ativo ? 'active' : '') : 'active'}" onclick="this.classList.toggle('active')"></div>
+                        <span class="text-sm text-zinc-300">Ativo</span>
+                    </div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button onclick="closeModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-3 rounded-xl transition">Cancelar</button>
+                    <button onclick="saveServico('${id || ''}')" class="flex-1 bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-semibold py-3 rounded-xl transition">Salvar</button>
+                </div>
+                ${isEdit ? `<button onclick="deleteServico('${id}')" class="w-full mt-3 text-red-400 hover:text-red-300 text-sm py-2 transition">Excluir serviço</button>` : ''}
+            `;
+
+            openModal();
+        };
+
+        window.saveServico = async function(id) {
+            const nome = document.getElementById('modalServicoNome').value.trim();
+            const descricao = document.getElementById('modalServicoDesc').value.trim();
+            const preco = parseFloat(document.getElementById('modalServicoPreco').value);
+            const duracao = parseInt(document.getElementById('modalServicoDuracao').value);
+            const ordem = parseInt(document.getElementById('modalServicoOrdem').value) || 1;
+            const ativo = document.getElementById('modalServicoAtivoToggle').classList.contains('active');
+
+            if (!nome) { showToast('Nome é obrigatório.', 'warning'); return; }
+            if (isNaN(preco) || preco < 0) { showToast('Preço inválido.', 'warning'); return; }
+            if (isNaN(duracao) || duracao < 1) { showToast('Duração inválida.', 'warning'); return; }
+
+            const data = { nome, descricao, preco, duracao, ordem, ativo };
+
+            try {
+                if (id) {
+                    await updateDoc(doc(db, "servicos", id), data);
+                    showToast('Serviço atualizado!', 'success');
+                } else {
+                    await addDoc(collection(db, "servicos"), { ...data, criadoEm: serverTimestamp() });
+                    showToast('Serviço criado!', 'success');
+                }
+
+                closeModal();
+                loadAdminServicos();
+            } catch (error) {
+                console.error('Erro ao salvar serviço:', error);
+                showToast('Erro ao salvar serviço.', 'error');
+            }
+        };
+
+        window.toggleServico = async function(id, ativoAtual) {
+            try {
+                await updateDoc(doc(db, "servicos", id), { ativo: !ativoAtual });
+                showToast(ativoAtual ? 'Serviço desativado.' : 'Serviço ativado.', 'success');
+                loadAdminServicos();
+            } catch (error) {
+                console.error('Erro ao alterar serviço:', error);
+                showToast('Erro ao alterar serviço.', 'error');
+            }
+        };
+
+        window.deleteServico = async function(id) {
+            if (!confirm('Tem certeza que deseja excluir este serviço? Essa ação não pode ser desfeita.')) return;
+
+            try {
+                await deleteDoc(doc(db, "servicos", id));
+                showToast('Serviço excluído.', 'success');
+                closeModal();
+                loadAdminServicos();
+            } catch (error) {
+                console.error('Erro ao excluir serviço:', error);
+                showToast('Erro ao excluir serviço.', 'error');
+            }
+        };
+
+        // ============================================
+        // ADMIN - HORÁRIOS
+        // ============================================
+
+        function loadAdminHorarios() {
+            // Dias de funcionamento
+            const diasGrid = document.getElementById('diasFuncionamentoGrid');
+            diasGrid.innerHTML = DIAS_SEMANA.map((dia, i) => {
+                const ativo = state.diasFuncionamento.includes(i);
+                return `
+                    <label class="flex items-center gap-3 p-3 bg-zinc-800/50 rounded-xl cursor-pointer hover:bg-zinc-800 transition">
+                        <input type="checkbox" ${ativo ? 'checked' : ''} onchange="toggleDia(${i})"
+                            class="w-5 h-5 rounded border-zinc-600 bg-zinc-700 text-brand-dynamic focus:ring-brand-dynamic cursor-pointer accent-amber-500">
+                        <span class="text-sm font-medium">${dia}</span>
+                    </label>
+                `;
+            }).join('');
+
+            // Horários por dia
+            const container = document.getElementById('horariosPorDiaContainer');
+            container.innerHTML = DIAS_SEMANA.map((dia, i) => {
+                const dayKey = DIAS_KEY[i];
+                const horarios = state.horariosPorDia[dayKey] || [];
+                const ativo = state.diasFuncionamento.includes(i);
+
+                if (!ativo) return '';
+
+                return `
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5 animate-fade-in">
+                        <h3 class="text-sm font-semibold text-zinc-300 mb-3 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-brand-dynamic"></span>
+                            ${dia}
+                        </h3>
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            ${horarios.sort().map(h => `
+                                <span class="inline-flex items-center gap-1.5 bg-zinc-800 text-white text-sm font-mono px-3 py-1.5 rounded-lg">
+                                    ${h}
+                                    <button onclick="removeHorario('${dayKey}', '${h}')" class="text-zinc-500 hover:text-red-400 transition ml-1">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    </button>
+                                </span>
+                            `).join('')}
+                            ${horarios.length === 0 ? '<span class="text-zinc-600 text-sm">Nenhum horário cadastrado</span>' : ''}
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="time" id="newTime-${dayKey}" class="!w-auto !text-sm !py-2">
+                            <button onclick="addHorario('${dayKey}')" class="bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-semibold text-sm px-4 py-2 rounded-xl transition flex items-center gap-1">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                Adicionar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.toggleDia = async function(diaIndex) {
+            const idx = state.diasFuncionamento.indexOf(diaIndex);
+            if (idx > -1) {
+                state.diasFuncionamento.splice(idx, 1);
+            } else {
+                state.diasFuncionamento.push(diaIndex);
+                state.diasFuncionamento.sort();
+            }
+
+            try {
+                await updateDoc(doc(db, "configuracoes", "barbearia"), {
+                    diasFuncionamento: state.diasFuncionamento,
+                    atualizadoEm: serverTimestamp()
+                });
+                state.config.diasFuncionamento = state.diasFuncionamento;
+                showToast('Dias de funcionamento atualizados.', 'success');
+                loadAdminHorarios();
+            } catch (error) {
+                console.error('Erro ao atualizar dias:', error);
+                showToast('Erro ao atualizar dias.', 'error');
+            }
+        };
+
+        window.addHorario = async function(dayKey) {
+            const input = document.getElementById(`newTime-${dayKey}`);
+            const time = input.value;
+
+            if (!time) {
+                showToast('Selecione um horário.', 'warning');
+                return;
+            }
+
+            const horarios = state.horariosPorDia[dayKey] || [];
+            if (horarios.includes(time)) {
+                showToast('Este horário já existe.', 'warning');
+                return;
+            }
+
+            horarios.push(time);
+            horarios.sort();
+            state.horariosPorDia[dayKey] = horarios;
+
+            try {
+                await updateDoc(doc(db, "configuracoes", "barbearia"), {
+                    horariosPorDia: state.horariosPorDia,
+                    atualizadoEm: serverTimestamp()
+                });
+                state.config.horariosPorDia = state.horariosPorDia;
+                showToast('Horário adicionado!', 'success');
+                input.value = '';
+                loadAdminHorarios();
+            } catch (error) {
+                console.error('Erro ao adicionar horário:', error);
+                showToast('Erro ao adicionar horário.', 'error');
+            }
+        };
+
+        window.removeHorario = async function(dayKey, time) {
+            const horarios = state.horariosPorDia[dayKey] || [];
+            const idx = horarios.indexOf(time);
+            if (idx > -1) {
+                horarios.splice(idx, 1);
+                state.horariosPorDia[dayKey] = horarios;
+
+                try {
+                    await updateDoc(doc(db, "configuracoes", "barbearia"), {
+                        horariosPorDia: state.horariosPorDia,
+                        atualizadoEm: serverTimestamp()
+                    });
+                    state.config.horariosPorDia = state.horariosPorDia;
+                    showToast('Horário removido.', 'success');
+                    loadAdminHorarios();
+                } catch (error) {
+                    console.error('Erro ao remover horário:', error);
+                    showToast('Erro ao remover horário.', 'error');
+                }
+            }
+        };
+
+        // ============================================
+        // ADMIN - PERSONALIZAÇÃO
+        // ============================================
+
+        function loadAdminPersonalizar() {
+            const cfg = state.config;
+            document.getElementById('cfgNome').value = cfg.nome || '';
+            document.getElementById('cfgSlogan').value = cfg.slogan || '';
+            document.getElementById('cfgDescricao').value = cfg.descricao || '';
+            document.getElementById('cfgLogo').value = cfg.logoUrl || '';
+            document.getElementById('cfgWhatsapp').value = cfg.whatsapp || '';
+            document.getElementById('cfgInstagram').value = cfg.instagram || '';
+            document.getElementById('cfgInstagramTexto').value = cfg.instagramTexto || 'Veja nossos cortes no Instagram';
+            document.getElementById('cfgCorHex').value = cfg.corPrincipal || '#f59e0b';
+            document.getElementById('cfgCorPicker').value = cfg.corPrincipal || '#f59e0b';
+
+            // Destacar cor selecionada
+            selectColor(cfg.corPrincipal || '#f59e0b');
+        }
+
+        window.selectColor = function(color) {
+            document.getElementById('cfgCorHex').value = color;
+            document.getElementById('cfgCorPicker').value = color;
+
+            document.querySelectorAll('.color-option').forEach(btn => {
+                btn.classList.remove('border-white', 'ring-2', 'ring-white/50');
+                btn.classList.add('border-transparent');
+            });
+
+            const activeBtn = document.querySelector(`.color-option[data-color="${color}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('border-white', 'ring-2', 'ring-white/50');
+                activeBtn.classList.remove('border-transparent');
+            }
+        };
+
+        window.salvarPersonalizacao = async function() {
+            const btn = document.getElementById('btnSalvarPersonalizacao');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const data = {
+                    nome: document.getElementById('cfgNome').value.trim() || 'Barbearia Premium',
+                    slogan: document.getElementById('cfgSlogan').value.trim() || 'Seu estilo começa aqui.',
+                    descricao: document.getElementById('cfgDescricao').value.trim() || '',
+                    logoUrl: document.getElementById('cfgLogo').value.trim() || '',
+                    whatsapp: document.getElementById('cfgWhatsapp').value.trim() || '',
+                    instagram: document.getElementById('cfgInstagram').value.trim() || '',
+                    instagramTexto: document.getElementById('cfgInstagramTexto').value.trim() || 'Veja nossos cortes no Instagram',
+                    corPrincipal: document.getElementById('cfgCorHex').value.trim() || '#f59e0b',
+                    atualizadoEm: serverTimestamp()
+                };
+
+                await updateDoc(doc(db, "configuracoes", "barbearia"), data);
+
+                // Atualizar estado local
+                Object.assign(state.config, data);
+                WHATSAPP_BARBEIRO = data.whatsapp;
+
+                // Reaplicar branding
+                applyBranding();
+
+                showToast('Personalização salva com sucesso!', 'success');
+            } catch (error) {
+                console.error('Erro ao salvar personalização:', error);
+                showToast('Erro ao salvar personalização.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'SALVAR ALTERAÇÕES';
+            }
+        };
+
+        // ============================================
+        // ADMIN - MENSAGENS
+        // ============================================
+
+        function loadAdminMensagens() {
+            const cfg = state.config;
+            document.getElementById('cfgMsgConfirmacao').value = cfg.mensagemConfirmacao || DEFAULT_CONFIG.mensagemConfirmacao;
+            document.getElementById('cfgMsgCancelamento').value = cfg.mensagemCancelamento || DEFAULT_CONFIG.mensagemCancelamento;
+        }
+
+        window.salvarMensagens = async function() {
+            try {
+                const data = {
+                    mensagemConfirmacao: document.getElementById('cfgMsgConfirmacao').value.trim(),
+                    mensagemCancelamento: document.getElementById('cfgMsgCancelamento').value.trim(),
+                    atualizadoEm: serverTimestamp()
+                };
+
+                await updateDoc(doc(db, "configuracoes", "barbearia"), data);
+                Object.assign(state.config, data);
+
+                showToast('Mensagens salvas com sucesso!', 'success');
+            } catch (error) {
+                console.error('Erro ao salvar mensagens:', error);
+                showToast('Erro ao salvar mensagens.', 'error');
+            }
+        };
+
+        // ============================================
+        // UTILITÁRIOS - FORMATAÇÃO
+        // ============================================
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value || 0);
+        }
+
+        function formatDateISO(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatDateBR(dateStr) {
+            if (!dateStr) return '';
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        function formatDateFriendly(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr + 'T12:00:00');
+            const dayOfWeek = DIAS_SEMANA[date.getDay()];
+            const day = date.getDate();
+            const month = MESES[date.getMonth()];
+            return `${dayOfWeek}, ${day} de ${month}`;
+        }
+
+        function formatPhone(phone) {
+            if (!phone) return '';
+            const cleaned = phone.replace(/\D/g, '');
+            if (cleaned.length === 11) {
+                return `(${cleaned.substr(0, 2)}) ${cleaned.substr(2, 5)}-${cleaned.substr(7, 4)}`;
+            } else if (cleaned.length === 10) {
+                return `(${cleaned.substr(0, 2)}) ${cleaned.substr(2, 4)}-${cleaned.substr(6, 4)}`;
+            }
+            return phone;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // ============================================
+        // UTILITÁRIOS - CORES
+        // ============================================
+
+        function lightenColor(hex, percent) {
+            const num = parseInt(hex.replace('#', ''), 16);
+            const r = Math.min(255, (num >> 16) + Math.round(255 * percent / 100));
+            const g = Math.min(255, ((num >> 8) & 0x00FF) + Math.round(255 * percent / 100));
+            const b = Math.min(255, (num & 0x0000FF) + Math.round(255 * percent / 100));
+            return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+        }
+
+        function darkenColor(hex, percent) {
+            const num = parseInt(hex.replace('#', ''), 16);
+            const r = Math.max(0, (num >> 16) - Math.round(255 * percent / 100));
+            const g = Math.max(0, ((num >> 8) & 0x00FF) - Math.round(255 * percent / 100));
+            const b = Math.max(0, (num & 0x0000FF) - Math.round(255 * percent / 100));
+            return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+        }
+
+        // ============================================
+        // UTILITÁRIOS - STATUS
+        // ============================================
+
+        function getStatusLabel(status) {
+            const labels = { pendente: 'Pendente', confirmado: 'Confirmado', cancelado: 'Cancelado' };
+            return labels[status] || status;
+        }
+
+        function getStatusBadgeClass(status) {
+            const classes = {
+                pendente: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
+                confirmado: 'bg-green-500/10 text-green-400 border border-green-500/20',
+                cancelado: 'bg-red-500/10 text-red-400 border border-red-500/20'
+            };
+            return classes[status] || 'bg-zinc-800 text-zinc-400';
+        }
+
+        // ============================================
+        // UTILITÁRIOS - UI
+        // ============================================
+
+        function showPage(pageId) {
+            ['clientPage', 'approvalPage', 'adminLogin', 'adminPanel'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(pageId).classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            const loading = document.getElementById('loadingScreen');
+            loading.style.transition = 'opacity 0.4s ease';
+            loading.style.opacity = '0';
+            setTimeout(() => {
+                loading.style.display = 'none';
+            }, 400);
+        }
+
+        function openModal() {
+            document.getElementById('modalOverlay').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        window.closeModal = function() {
+            document.getElementById('modalOverlay').classList.add('hidden');
+            document.body.style.overflow = '';
+        };
+
+        // Fechar modal ao clicar fora
+        document.getElementById('modalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // ============================================
+        // TOAST NOTIFICATIONS
+        // ============================================
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+
+            const colors = {
+                success: 'border-green-500/30 bg-green-500/10 text-green-400',
+                error: 'border-red-500/30 bg-red-500/10 text-red-400',
+                warning: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-400',
+                info: 'border-blue-500/30 bg-blue-500/10 text-blue-400'
+            };
+
+            const icons = {
+                success: '<path d="M20 6L9 17l-5-5"/>',
+                error: '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>',
+                warning: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+                info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-lg toast-enter ${colors[type]}`;
+            toast.innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0">${icons[type]}</svg>
+                <p class="text-sm font-medium flex-1">${message}</p>
+                <button onclick="this.parentElement.remove()" class="shrink-0 opacity-50 hover:opacity-100 transition">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto-remover após 4 segundos
+            setTimeout(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-exit');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // ============================================
+        // MÁSCARA DE TELEFONE
+        // ============================================
+
+        function setupPhoneMask() {
+            const input = document.getElementById('inputTelefone');
+            if (!input) return;
+
+            input.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+
+                if (value.length > 11) value = value.substr(0, 11);
+
+                if (value.length > 6) {
+                    value = `(${value.substr(0, 2)}) ${value.substr(2, 5)}-${value.substr(7)}`;
+                } else if (value.length > 2) {
+                    value = `(${value.substr(0, 2)}) ${value.substr(2)}`;
+                } else if (value.length > 0) {
+                    value = `(${value}`;
+                }
+
+                e.target.value = value;
+            });
+        }
+
+        // ============================================
+        // EVENTOS E INICIALIZAÇÃO FINAL
+        // ============================================
+
+        // Máscara de telefone
+        setupPhoneMask();
+
+        // Prevenir zoom em inputs no iOS
+        document.querySelectorAll('input, textarea, select').forEach(el => {
+            el.addEventListener('focus', function() {
+                if (window.innerWidth < 768) {
+                    this.style.fontSize = '16px';
+                }
+            });
+        });
+
+        // Scroll suave
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) target.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        // Inicializar
+        init();
+
+    </script>
+</body>
+</html>
