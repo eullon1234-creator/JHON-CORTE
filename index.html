@@ -3251,7 +3251,7 @@
         };
 
         // ============================================
-        // PRODUTOS, AFILIADOS & ENCOMENDAS (+10%)
+        // PRODUTOS, AFILIADOS & ENCOMENDAS (+ TAXA CONFIGURÁVEL)
         // ============================================
 
         const DEFAULT_PRODUTOS = [
@@ -3262,6 +3262,8 @@
                 descricao: "Acabamento fosco natural sem brilho, alta fixação para manter o penteado o dia todo sem deixar resíduos.",
                 preco: 34.90,
                 precoAntigo: 45.00,
+                precoSalaoFixo: 40.00, // Preço garantido de venda no salão
+                taxaPercentual: 15,    // 15% de margem automática
                 imagemUrl: "https://images.unsplash.com/photo-1597854710119-a5a843967337?w=500&auto=format&fit=crop&q=60",
                 linkAfiliado: "https://shopee.com.br",
                 destaque: true
@@ -3273,6 +3275,8 @@
                 descricao: "Fórmula com óleos nobres que hidratam os fios, amaciam a barba e eliminam a coceira e o frizz.",
                 preco: 29.90,
                 precoAntigo: 39.00,
+                precoSalaoFixo: 35.00,
+                taxaPercentual: 15,
                 imagemUrl: "https://images.unsplash.com/photo-1621607512214-68297480165e?w=500&auto=format&fit=crop&q=60",
                 linkAfiliado: "https://amazon.com.br",
                 destaque: true
@@ -3284,6 +3288,8 @@
                 descricao: "Estimula o crescimento acelerado dos fios, preenche falhas na barba e combate a queda capilar.",
                 preco: 49.90,
                 precoAntigo: 69.00,
+                precoSalaoFixo: 59.90,
+                taxaPercentual: 20,
                 imagemUrl: "https://images.unsplash.com/photo-1608248597359-2169b917fa9e?w=500&auto=format&fit=crop&q=60",
                 linkAfiliado: "https://shopee.com.br",
                 destaque: true
@@ -3295,6 +3301,8 @@
                 descricao: "Limpeza profunda e refrescante com mentol e piritionato de zinco. Controla a oleosidade e previne a caspa.",
                 preco: 32.00,
                 precoAntigo: 42.00,
+                precoSalaoFixo: 38.00,
+                taxaPercentual: 15,
                 imagemUrl: "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=500&auto=format&fit=crop&q=60",
                 linkAfiliado: "https://amazon.com.br",
                 destaque: false
@@ -3306,6 +3314,8 @@
                 descricao: "Feito à mão em madeira nobre. Elimina a eletricidade estática dos fios e alinha a barba perfeitamente.",
                 preco: 19.90,
                 precoAntigo: 28.00,
+                precoSalaoFixo: 24.00,
+                taxaPercentual: 20,
                 imagemUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=500&auto=format&fit=crop&q=60",
                 linkAfiliado: "https://shopee.com.br",
                 destaque: false
@@ -3343,8 +3353,18 @@
 
             container.innerHTML = prods.map(p => {
                 const precoLink = p.preco || 0;
-                const taxa = precoLink * 0.10;
-                const precoSalao = precoLink + taxa;
+                const taxaPct = p.taxaPercentual || 15;
+                
+                // Se tiver preço fixo de salão definido, usa o preço fixo. Senão, calcula com a taxa %.
+                let precoSalao, valorTaxa;
+                if (p.precoSalaoFixo && p.precoSalaoFixo > 0) {
+                    precoSalao = p.precoSalaoFixo;
+                    valorTaxa = precoSalao - precoLink;
+                } else {
+                    valorTaxa = precoLink * (taxaPct / 100);
+                    precoSalao = precoLink + valorTaxa;
+                }
+
                 const descontoPct = p.precoAntigo ? Math.round((1 - (precoLink / p.precoAntigo)) * 100) : 0;
 
                 return `
@@ -3375,6 +3395,7 @@
                                 <div class="mt-2 flex items-baseline gap-2">
                                     <span class="text-base font-black text-white font-mono">${formatCurrency(precoLink)}</span>
                                     ${p.precoAntigo ? `<span class="text-xs text-zinc-500 line-through font-mono">${formatCurrency(p.precoAntigo)}</span>` : ''}
+                                    <span class="text-[10px] text-amber-400/90 font-medium">⚡ Oferta Relâmpago</span>
                                 </div>
                             </div>
                         </div>
@@ -3388,7 +3409,7 @@
                                 <span>Comprar no Link (${formatCurrency(precoLink)})</span>
                             </a>
 
-                            <!-- Opção B: Encomenda Salão (+10%) -->
+                            <!-- Opção B: Encomenda Salão com Taxa Automática -->
                             <button onclick="abrirModalEncomenda('${p.id}')"
                                     class="py-2.5 px-3 rounded-xl bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 text-xs font-bold transition text-center flex items-center justify-center gap-1.5 shadow-sm hover:scale-[1.02] active:scale-[0.98]">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
@@ -3406,8 +3427,16 @@
 
             const sessao = getClienteSessao();
             const precoLink = prod.preco || 0;
-            const taxa = precoLink * 0.10;
-            const precoTotal = precoLink + taxa;
+            const taxaPct = prod.taxaPercentual || 15;
+            
+            let precoTotal, valorTaxa;
+            if (prod.precoSalaoFixo && prod.precoSalaoFixo > 0) {
+                precoTotal = prod.precoSalaoFixo;
+                valorTaxa = precoTotal - precoLink;
+            } else {
+                valorTaxa = precoLink * (taxaPct / 100);
+                precoTotal = precoLink + valorTaxa;
+            }
 
             const modal = document.getElementById('modalContent');
             modal.innerHTML = `
@@ -3418,15 +3447,15 @@
                     <h3 class="text-lg font-bold text-white leading-snug">${escapeHtml(prod.nome)}</h3>
                 </div>
 
-                <!-- Detalhamento dos 10% de Taxa de Conveniência -->
-                <div class="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800 space-y-2 mb-4">
+                <!-- Detalhamento Automático da Taxa de Conveniência -->
+                <div class="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800 space-y-2 mb-3">
                     <div class="flex justify-between text-xs text-zinc-400">
                         <span>Valor do Produto no Link:</span>
                         <span class="font-mono text-zinc-200">${formatCurrency(precoLink)}</span>
                     </div>
                     <div class="flex justify-between text-xs text-amber-400">
-                        <span>Taxa de Conveniência do Salão (+10%):</span>
-                        <span class="font-mono font-bold">+ ${formatCurrency(taxa)}</span>
+                        <span>Taxa de Conveniência (+${taxaPct}%):</span>
+                        <span class="font-mono font-bold">+ ${formatCurrency(valorTaxa)}</span>
                     </div>
                     <div class="pt-2 border-t border-zinc-800 flex justify-between text-sm font-bold text-white">
                         <span>Total a Pagar no Salão:</span>
@@ -3434,8 +3463,10 @@
                     </div>
                 </div>
 
-                <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-zinc-300 text-xs mb-4">
-                    💡 <strong>Como funciona:</strong> Nós fazemos o pedido para você e deixamos o produto guardado na barbearia para você retirar no dia do seu corte!
+                <!-- Cláusula de Proteção Contra Mudança de Preço -->
+                <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-zinc-300 text-[11px] mb-3 space-y-1">
+                    <p>💡 <strong>Como funciona:</strong> Nós fazemos a compra por você e você retira aqui na barbearia no dia do seu corte, sem se preocupar com frete ou endereço!</p>
+                    <p class="text-amber-400/90 text-[10px]">📌 <em>Valores promocionais do link sujeitos à duração da oferta na loja parceira. Caso a promoção encerre, confirmamos com você antes de comprar.</em></p>
                 </div>
 
                 <div class="space-y-3">
@@ -3449,10 +3480,10 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">Observação (Opcional)</label>
-                        <input type="text" id="encomendaObs" placeholder="Ex: Entregar no meu corte de sexta" class="w-full">
+                        <input type="text" id="encomendaObs" placeholder="Ex: Retirar no corte de sábado" class="w-full">
                     </div>
 
-                    <button onclick="confirmarEncomenda('${prod.id}', ${precoLink}, ${taxa}, ${precoTotal})" 
+                    <button onclick="confirmarEncomenda('${prod.id}', ${precoLink}, ${valorTaxa}, ${precoTotal}, ${taxaPct})" 
                             class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition flex items-center justify-center gap-2 shadow-lg mt-2">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                         <span>ENVIAR ENCOMENDA NO WHATSAPP</span>
@@ -3462,7 +3493,7 @@
             openModal();
         };
 
-        window.confirmarEncomenda = async function(prodId, precoLink, taxa, precoTotal) {
+        window.confirmarEncomenda = async function(prodId, precoLink, taxa, precoTotal, taxaPct) {
             const nome = document.getElementById('encomendaNome').value.trim();
             const tel = document.getElementById('encomendaTel').value.trim();
             const obs = document.getElementById('encomendaObs').value.trim();
@@ -3488,6 +3519,7 @@
                     precoBase: precoLink,
                     taxaConveniencia: taxa,
                     precoTotal: precoTotal,
+                    taxaPercentual: taxaPct || 15,
                     observacao: obs || '',
                     status: 'pendente',
                     criadoEm: serverTimestamp()
@@ -3496,17 +3528,18 @@
                 closeModal();
                 showToast('Encomenda registrada com sucesso!', 'success');
 
-                // Enviar mensagem no WhatsApp do barbeiro/gerente
+                // Enviar mensagem no WhatsApp do barbeiro/gerente com cláusula de proteção
                 const zapBarbeiro = (state.config && state.config.whatsapp) ? state.config.whatsapp.replace(/\D/g, '') : '5586999999999';
-                const msg = `📦 *NOVO PEDIDO DE ENCOMENDA NO SALÃO (+10%)*\n\n` +
+                const msg = `📦 *NOVO PEDIDO DE ENCOMENDA NO SALÃO*\n\n` +
                             `👤 *Cliente:* ${nome}\n` +
                             `📱 *WhatsApp:* ${formatPhone(tel)}\n` +
                             `🛍️ *Produto:* ${nomeProd}\n` +
                             `💰 *Valor Base (Link):* ${formatCurrency(precoLink)}\n` +
-                            `💈 *Taxa Salão (10%):* ${formatCurrency(taxa)}\n` +
+                            `💈 *Taxa Salão (+${taxaPct}%):* ${formatCurrency(taxa)}\n` +
                             `💵 *TOTAL A PAGAR NO SALÃO:* ${formatCurrency(precoTotal)}\n` +
                             (obs ? `📝 *Obs:* ${obs}\n\n` : `\n`) +
-                            `⚠️ _O cliente solicitou para a barbearia encomendar e entregar no próximo corte!_`;
+                            `⚠️ _O cliente solicitou para a barbearia encomendar e entregar no próximo corte!_\n` +
+                            `📌 _Valor cotado na promoção. Caso haja alteração no link parceiro, confirme antes de comprar._`;
 
                 const zapUrl = `https://wa.me/${zapBarbeiro}?text=${encodeURIComponent(msg)}`;
                 window.open(zapUrl, '_blank');
@@ -3538,35 +3571,47 @@
                 }
                 state.produtos = prods;
 
-                list.innerHTML = prods.map(p => `
-                    <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex gap-3.5 items-start justify-between">
-                        <div class="flex gap-3 min-w-0">
-                            <img src="${p.imagemUrl || 'https://images.unsplash.com/photo-1597854710119-a5a843967337?w=500&auto=format&fit=crop&q=60'}" 
-                                 class="w-16 h-16 rounded-xl object-cover bg-zinc-950 shrink-0 border border-zinc-800">
-                            <div class="min-w-0">
-                                <span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-brand-dynamic/10 text-brand-dynamic">
-                                    ${escapeHtml(p.categoria || 'Geral')}
-                                </span>
-                                <h4 class="font-bold text-white text-sm truncate mt-0.5">${escapeHtml(p.nome)}</h4>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="text-xs font-mono font-bold text-green-400">Preço: ${formatCurrency(p.preco)}</span>
-                                    <span class="text-[11px] font-mono text-amber-400">+10%: ${formatCurrency((p.preco || 0) * 1.10)}</span>
+                list.innerHTML = prods.map(p => {
+                    const precoLink = p.preco || 0;
+                    const taxaPct = p.taxaPercentual || 15;
+                    const precoSalao = p.precoSalaoFixo && p.precoSalaoFixo > 0 ? p.precoSalaoFixo : (precoLink * (1 + taxaPct / 100));
+
+                    return `
+                        <div class="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex gap-3.5 items-start justify-between">
+                            <div class="flex gap-3 min-w-0">
+                                <img src="${p.imagemUrl || 'https://images.unsplash.com/photo-1597854710119-a5a843967337?w=500&auto=format&fit=crop&q=60'}" 
+                                     class="w-16 h-16 rounded-xl object-cover bg-zinc-950 shrink-0 border border-zinc-800">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-brand-dynamic/10 text-brand-dynamic">
+                                            ${escapeHtml(p.categoria || 'Geral')}
+                                        </span>
+                                        <span class="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
+                                            +${taxaPct}% Margem
+                                        </span>
+                                    </div>
+                                    <h4 class="font-bold text-white text-sm truncate mt-0.5">${escapeHtml(p.nome)}</h4>
+                                    <div class="flex items-center gap-2 mt-1 flex-wrap">
+                                        <span class="text-xs font-mono font-bold text-green-400">Link: ${formatCurrency(precoLink)}</span>
+                                        <span class="text-xs font-mono font-bold text-amber-400">Venda no Salão: ${formatCurrency(precoSalao)}</span>
+                                        ${p.precoSalaoFixo ? '<span class="text-[10px] text-zinc-400">(Preço Fixo Seguro)</span>' : ''}
+                                    </div>
+                                    <a href="${p.linkAfiliado || '#'}" target="_blank" class="text-[11px] text-zinc-500 hover:text-brand-dynamic truncate block mt-0.5">
+                                        🔗 Link de Afiliado configurado
+                                    </a>
                                 </div>
-                                <a href="${p.linkAfiliado || '#'}" target="_blank" class="text-[11px] text-zinc-500 hover:text-brand-dynamic truncate block mt-0.5">
-                                    🔗 Link de Afiliado configurado
-                                </a>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button onclick="abrirModalProdutoAdmin('${p.id}')" class="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition" title="Editar">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                </button>
+                                <button onclick="excluirProdutoAdmin('${p.id}')" class="p-2 rounded-lg bg-zinc-800 hover:bg-red-950 text-red-400 transition" title="Excluir">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                </button>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1 shrink-0">
-                            <button onclick="abrirModalProdutoAdmin('${p.id}')" class="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition" title="Editar">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                            </button>
-                            <button onclick="excluirProdutoAdmin('${p.id}')" class="p-2 rounded-lg bg-zinc-800 hover:bg-red-950 text-red-400 transition" title="Excluir">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
 
             } catch (error) {
                 console.error('Erro ao carregar admin produtos:', error);
@@ -3589,21 +3634,33 @@
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">Preço com Desconto (R$)</label>
+                            <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">Preço no Link (R$)</label>
                             <input type="number" step="0.01" id="adminProdPreco" value="${prod ? prod.preco : ''}" placeholder="34.90" class="w-full">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">Preço Original (R$)</label>
+                            <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">Preço Original Riscado (R$)</label>
                             <input type="number" step="0.01" id="adminProdPrecoAntigo" value="${prod ? (prod.precoAntigo || '') : ''}" placeholder="45.00" class="w-full">
                         </div>
                     </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1">Taxa de Margem Salão (%)</label>
+                            <input type="number" step="1" id="adminProdTaxa" value="${prod ? (prod.taxaPercentual || 15) : 15}" placeholder="15" class="w-full">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">Preço Fixo no Salão (Opcional R$)</label>
+                            <input type="number" step="0.01" id="adminProdPrecoFixo" value="${prod ? (prod.precoSalaoFixo || '') : ''}" placeholder="Deixe vazio p/ usar %" class="w-full">
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-zinc-400">💡 <em>Se preencher o Preço Fixo no Salão (ex: R$ 40), você garante seu lucro mesmo se a promoção do Mercado Livre acabar!</em></p>
+                    
                     <div>
                         <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">Categoria</label>
                         <input type="text" id="adminProdCategoria" value="${prod ? escapeHtml(prod.categoria || '') : 'Cabelo'}" placeholder="Cabelo, Barba, Tratamento..." class="w-full">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">Link de Afiliado (Shopee, Amazon, etc.)</label>
-                        <input type="url" id="adminProdLink" value="${prod ? escapeHtml(prod.linkAfiliado || '') : ''}" placeholder="https://shopee.com.br/..." class="w-full">
+                        <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">Link de Afiliado (Mercado Livre, Shopee, Amazon)</label>
+                        <input type="url" id="adminProdLink" value="${prod ? escapeHtml(prod.linkAfiliado || '') : ''}" placeholder="https://..." class="w-full">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1">URL da Foto / Imagem</label>
@@ -3626,6 +3683,8 @@
             const nome = document.getElementById('adminProdNome').value.trim();
             const preco = parseFloat(document.getElementById('adminProdPreco').value);
             const precoAntigo = parseFloat(document.getElementById('adminProdPrecoAntigo').value) || null;
+            const taxaPercentual = parseFloat(document.getElementById('adminProdTaxa').value) || 15;
+            const precoSalaoFixo = parseFloat(document.getElementById('adminProdPrecoFixo').value) || null;
             const categoria = document.getElementById('adminProdCategoria').value.trim() || 'Cuidados';
             const linkAfiliado = document.getElementById('adminProdLink').value.trim();
             const imagemUrl = document.getElementById('adminProdImg').value.trim();
@@ -3640,6 +3699,8 @@
                 nome,
                 preco,
                 precoAntigo,
+                taxaPercentual,
+                precoSalaoFixo,
                 categoria,
                 linkAfiliado,
                 imagemUrl: imagemUrl || 'https://images.unsplash.com/photo-1597854710119-a5a843967337?w=500&auto=format&fit=crop&q=60',
