@@ -1622,14 +1622,138 @@
         }
 
         // ============================================
-        // HORÁRIOS
+        // HORÁRIOS & MOTOR DE FILA ADAPTATIVA DINÂMICA
         // ============================================
 
-        function getHorariosForDate(dateStr) {
-            const date = new Date(dateStr + 'T12:00:00');
-            const dayOfWeek = date.getDay();
+        function timeToMinutes(t) {
+            if (!t) return 0;
+            const [h, m] = t.split(':').map(Number);
+            return (h || 0) * 60 + (m || 0);
+        }
+
+        function minutesToTime(totalMin) {
+            const h = Math.floor(totalMin / 60) % 24;
+            const m = totalMin % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function calculateDynamicTimeline(dateStr, selectedDuracao, agendamentosList, bloqueiosList) {
+            const dateObj = new Date(dateStr + 'T12:00:00');
+            const dayOfWeek = dateObj.getDay();
             const dayKey = DIAS_KEY[dayOfWeek];
-            return (state.horariosPorDia[dayKey] || []).sort();
+            const isFuncionando = state.diasFuncionamento.includes(dayOfWeek);
+            const horariosConfig = (state.horariosPorDia[dayKey] || []).sort();
+
+            if (!isFuncionando || horariosConfig.length === 0) {
+                return { isFuncionando: false, slots: [], diaBloqueado: null };
+            }
+
+            // Dia inteiro bloqueado?
+            const diaBloq = bloqueiosList.find(b => b.tipo === 'dia');
+            if (diaBloq) {
+                return { isFuncionando: true, slots: [], diaBloqueado: diaBloq.motivo || 'Folga / Barbearia Fechada' };
+            }
+
+            const startMin = timeToMinutes(horariosConfig[0]);
+            // O fechamento padrão é o último horário configurado + 40 min
+            const lastConfigMin = timeToMinutes(horariosConfig[horariosConfig.length - 1]);
+            const endMin = lastConfigMin + 40;
+            const servDuracao = Math.max(parseInt(selectedDuracao || 20), 10);
+
+            // Mapear intervalos ocupados
+            const busyIntervals = [];
+
+            // Bloqueios parciais
+            bloqueiosList.forEach(b => {
+                if (b.horario) {
+                    const bStart = timeToMinutes(b.horario);
+                    busyIntervals.push({
+                        startMin: bStart,
+                        endMin: bStart + 40,
+                        tipo: 'bloqueio',
+                        motivo: b.motivo || 'Bloqueado',
+                        horario: b.horario,
+                        horarioFim: minutesToTime(bStart + 40)
+                    });
+                }
+            });
+
+            // Agendamentos ativos (não cancelados)
+            agendamentosList.forEach(a => {
+                if (a.status === 'cancelado') return;
+
+                let aDur = parseInt(a.duracao);
+                if (!aDur || isNaN(aDur)) {
+                    const sMatch = (state.servicos || []).find(s => s.nome.toLowerCase() === (a.servico || '').toLowerCase());
+                    aDur = sMatch ? sMatch.duracao : 30;
+                }
+                const aStart = timeToMinutes(a.horario);
+                const aEnd = a.horarioFim ? timeToMinutes(a.horarioFim) : (aStart + aDur);
+
+                busyIntervals.push({
+                    startMin: aStart,
+                    endMin: aEnd,
+                    tipo: 'agendamento',
+                    agendamento: a,
+                    horario: a.horario,
+                    horarioFim: a.horarioFim || minutesToTime(aEnd),
+                    duracao: aDur,
+                    status: a.status
+                });
+            });
+
+            // Ordenar por hora de início
+            busyIntervals.sort((a, b) => a.startMin - b.startMin);
+
+            const timeline = [];
+            let cursor = startMin;
+
+            while (cursor < endMin) {
+                // Verificar se o cursor está dentro de algum agendamento/bloqueio
+                const busy = busyIntervals.find(b => cursor >= b.startMin && cursor < b.endMin);
+
+                if (busy) {
+                    timeline.push({
+                        tipo: busy.tipo,
+                        horario: busy.horario,
+                        horarioFim: busy.horarioFim,
+                        startMin: busy.startMin,
+                        endMin: busy.endMin,
+                        duracao: busy.duracao || (busy.endMin - busy.startMin),
+                        agendamento: busy.agendamento,
+                        motivo: busy.motivo,
+                        status: busy.status,
+                        isLivre: false
+                    });
+                    // O próximo horário livre começa EXATAMENTE quando este corte termina!
+                    cursor = busy.endMin;
+                } else {
+                    // Próximo agendamento que virá mais tarde
+                    const nextBusy = busyIntervals.find(b => b.startMin > cursor);
+                    const limit = nextBusy ? nextBusy.startMin : endMin;
+                    const tempoDisponivel = limit - cursor;
+
+                    if (tempoDisponivel >= Math.min(servDuracao, 15)) {
+                        const slotFim = Math.min(cursor + servDuracao, limit);
+                        timeline.push({
+                            tipo: 'livre',
+                            horario: minutesToTime(cursor),
+                            horarioFim: minutesToTime(slotFim),
+                            startMin: cursor,
+                            endMin: slotFim,
+                            duracao: servDuracao,
+                            isLivre: true
+                        });
+                        // Avança pelo tempo do corte
+                        cursor += servDuracao;
+                    } else {
+                        // Se sobrou um intervalo muito curto (ex: 5 min), pula para o início do próximo corte
+                        cursor = limit;
+                    }
+                }
+            }
+
+            return { isFuncionando: true, slots: timeline, diaBloqueado: null };
         }
 
         async function loadHorariosForDate(dateStr) {
@@ -1648,117 +1772,112 @@
             state.selectedHorario = null;
 
             try {
-                const horarios = getHorariosForDate(dateStr);
-
-                if (horarios.length === 0) {
-                    loading.classList.add('hidden');
-                    semHorarios.classList.remove('hidden');
-                    return;
-                }
-
-                // Buscar agendamentos para a data selecionada
+                // 1. Buscar agendamentos da data
                 const q = query(
                     collection(db, "agendamentos"),
                     where("data", "==", dateStr)
                 );
                 const snapshot = await getDocs(q);
-
-                const ocupados = new Set();
+                const agendamentosList = [];
                 snapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    if (data.status === 'pendente' || data.status === 'confirmado') {
-                        ocupados.add(data.horario);
-                    }
+                    agendamentosList.push({ id: docSnap.id, ...docSnap.data() });
                 });
 
-                // Buscar bloqueios para a data
+                // 2. Buscar bloqueios da data
                 const qBloq = query(
                     collection(db, "bloqueios"),
                     where("data", "==", dateStr)
                 );
                 const snapBloq = await getDocs(qBloq);
-                const bloqueiosMap = {};
-                let diaInteiroBloqueado = null;
-
+                const bloqueiosList = [];
                 snapBloq.forEach(docSnap => {
-                    const b = docSnap.data();
-                    if (b.tipo === 'dia') {
-                        diaInteiroBloqueado = b.motivo || 'Barbearia Fechada / Folga';
-                    } else if (b.horario) {
-                        bloqueiosMap[b.horario] = b.motivo || 'Bloqueado';
-                    }
+                    bloqueiosList.push({ id: docSnap.id, ...docSnap.data() });
                 });
 
-                if (diaInteiroBloqueado) {
-                    loading.classList.add('hidden');
-                    semHorarios.querySelector('p').textContent = `Data bloqueada: ${diaInteiroBloqueado}`;
+                // 3. Duração do serviço escolhido pelo cliente
+                const servicoDuracao = state.selectedServico ? (state.selectedServico.duracao || 30) : 30;
+
+                // 4. Calcular grade dinâmica e adaptativa
+                const { isFuncionando, slots, diaBloqueado } = calculateDynamicTimeline(dateStr, servicoDuracao, agendamentosList, bloqueiosList);
+
+                loading.classList.add('hidden');
+
+                if (!isFuncionando) {
+                    semHorarios.querySelector('p').textContent = 'A barbearia não funciona nesta data.';
                     semHorarios.classList.remove('hidden');
                     return;
                 }
 
-                // Verificar se é hoje para desabilitar horários passados
+                if (diaBloqueado) {
+                    semHorarios.querySelector('p').textContent = `Data bloqueada: ${diaBloqueado}`;
+                    semHorarios.classList.remove('hidden');
+                    return;
+                }
+
+                if (slots.length === 0) {
+                    semHorarios.querySelector('p').textContent = 'Nenhum horário disponível para esta data.';
+                    semHorarios.classList.remove('hidden');
+                    return;
+                }
+
                 const agora = new Date();
-                const hoje = formatDateISO(agora);
-                const isHoje = dateStr === hoje;
+                const hojeISO = formatDateISO(agora);
+                const isHoje = dateStr === hojeISO;
+                const horaMinutoAtual = agora.getHours() * 60 + agora.getMinutes();
 
-                loading.classList.add('hidden');
+                let livresDisponiveis = 0;
 
-                container.innerHTML = horarios.map(h => {
-                    const isOcupado = ocupados.has(h);
-                    const isBloqueado = bloqueiosMap[h];
-                    let isPassado = false;
-
-                    if (isHoje) {
-                        const [hh, mm] = h.split(':').map(Number);
-                        const horarioDate = new Date();
-                        horarioDate.setHours(hh, mm, 0, 0);
-                        isPassado = horarioDate <= agora;
+                container.innerHTML = slots.map(slot => {
+                    if (slot.tipo === 'bloqueio') {
+                        return `
+                            <div class="py-3 px-2 rounded-xl bg-zinc-900/40 border border-red-900/30 text-red-400 text-center select-none">
+                                <span class="block text-[10px] uppercase font-bold text-red-400">BLOQUEADO</span>
+                                <span class="font-mono text-xs line-through">${slot.horario}</span>
+                            </div>
+                        `;
                     }
 
-                    if (isBloqueado) {
-                        return `<button disabled class="py-3 px-2 rounded-xl bg-zinc-900/50 border border-zinc-800/50 text-red-400/80 text-sm font-medium cursor-not-allowed">
-                            <span class="block text-[10px] uppercase font-bold text-red-400">BLOQUEADO</span>
-                            <span class="line-through">${h}</span>
-                        </button>`;
+                    if (slot.tipo === 'agendamento') {
+                        return `
+                            <div class="py-3 px-2 rounded-xl bg-zinc-900/50 border border-zinc-800 text-zinc-500 text-center select-none opacity-60">
+                                <span class="block text-[10px] uppercase font-bold text-zinc-500">OCUPADO</span>
+                                <span class="font-mono text-xs font-bold text-zinc-400">${slot.horario}</span>
+                                <span class="block text-[9px] text-zinc-500">até ${slot.horarioFim}</span>
+                            </div>
+                        `;
                     }
-                    if (isOcupado) {
-                        return `<button disabled class="py-3 px-2 rounded-xl bg-zinc-900/50 border border-zinc-800/50 text-zinc-600 text-sm font-medium cursor-not-allowed">
-                            <span class="block text-xs">OCUPADO</span>
-                            <span class="line-through">${h}</span>
-                        </button>`;
-                    }
+
+                    // Slot livre
+                    const isPassado = isHoje && (slot.startMin <= horaMinutoAtual);
+
                     if (isPassado) {
-                        return `<button disabled class="py-3 px-2 rounded-xl bg-zinc-900/50 border border-zinc-800/50 text-zinc-600 text-sm font-medium cursor-not-allowed">
-                            <span class="block text-xs">ENCERRADO</span>
-                            <span class="line-through">${h}</span>
-                        </button>`;
+                        return `
+                            <div class="py-3 px-2 rounded-xl bg-zinc-900/30 border border-zinc-800/40 text-zinc-600 text-center select-none opacity-40">
+                                <span class="block text-[10px] uppercase font-semibold">ENCERRADO</span>
+                                <span class="font-mono text-xs">${slot.horario}</span>
+                            </div>
+                        `;
                     }
 
-                    return `<button onclick="selectHorario('${h}')" id="horario-${h.replace(':', '')}"
-                        class="py-3 px-2 rounded-xl border text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
-                        bg-zinc-900 border-zinc-700 text-white hover:border-brand-dynamic/50">
-                        ${h}
-                    </button>`;
+                    livresDisponiveis++;
+
+                    return `
+                        <button onclick="selectHorario('${slot.horario}')" id="horario-${slot.horario.replace(':', '')}"
+                            class="py-3 px-2 rounded-xl border text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
+                            bg-zinc-900 border-zinc-700 text-white hover:border-brand-dynamic/50 group">
+                            <span class="font-mono font-bold block">${slot.horario}</span>
+                            <span class="block text-[10px] text-zinc-400 font-normal group-hover:text-brand-dynamic transition">até ${slot.horarioFim}</span>
+                        </button>
+                    `;
                 }).join('');
 
-                // Se todos os horários estão indisponíveis
-                const disponiveis = horarios.filter(h => !ocupados.has(h));
-                if (isHoje) {
-                    const agoraTime = agora.getTime();
-                    const realmente = disponiveis.filter(h => {
-                        const [hh, mm] = h.split(':').map(Number);
-                        const d = new Date();
-                        d.setHours(hh, mm, 0, 0);
-                        return d.getTime() > agoraTime;
-                    });
-                    if (realmente.length === 0 && horarios.length > 0) {
-                        semHorarios.querySelector('p').textContent = 'Todos os horários de hoje já encerraram ou estão ocupados.';
-                        semHorarios.classList.remove('hidden');
-                    }
+                if (livresDisponiveis === 0 && slots.length > 0) {
+                    semHorarios.querySelector('p').textContent = 'Todos os horários desta data já foram preenchidos ou encerrados.';
+                    semHorarios.classList.remove('hidden');
                 }
 
             } catch (error) {
-                console.error('Erro ao carregar horários:', error);
+                console.error('Erro ao carregar horários adaptativos:', error);
                 loading.classList.add('hidden');
                 showToast('Erro ao carregar horários.', 'error');
             }
@@ -3468,59 +3587,45 @@
             diaInfo.textContent = formatDateFriendly(dataStr);
 
             try {
-                const dateObj = new Date(dataStr + 'T12:00:00');
-                const dayOfWeek = dateObj.getDay();
-                const dayKey = DIAS_KEY[dayOfWeek];
-                const isFuncionando = state.diasFuncionamento.includes(dayOfWeek);
-                const horariosDia = isFuncionando ? (state.horariosPorDia[dayKey] || []).sort() : [];
-
-                if (!isFuncionando || horariosDia.length === 0) {
-                    loading.classList.add('hidden');
-                    semHorarios.classList.remove('hidden');
-                    document.getElementById('quadroSemHorariosTitulo').textContent = !isFuncionando ? 'Barbearia Fechada neste dia' : 'Nenhum horário configurado';
-                    document.getElementById('quadroSemHorariosDesc').textContent = !isFuncionando ? 'Confira nossos outros dias de atendimento.' : 'Entre em contato pelo WhatsApp para mais informações.';
-                    updateLiveStatusBanner(null, false, dataStr);
-                    return;
-                }
-
-                // Buscar agendamentos da data no Firestore
+                // 1. Buscar agendamentos da data no Firestore
                 const q = query(
                     collection(db, "agendamentos"),
                     where("data", "==", dataStr)
                 );
                 const snapshot = await getDocs(q);
-
-                const agendamentosMap = {};
+                const agendamentosList = [];
                 snapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    if (data.status === 'pendente' || data.status === 'confirmado') {
-                        agendamentosMap[data.horario] = { id: docSnap.id, ...data };
-                    }
+                    agendamentosList.push({ id: docSnap.id, ...docSnap.data() });
                 });
 
-                // Buscar bloqueios para a data no Firestore
+                // 2. Buscar bloqueios para a data no Firestore
                 const qBloq = query(
                     collection(db, "bloqueios"),
                     where("data", "==", dataStr)
                 );
                 const snapBloq = await getDocs(qBloq);
-                const bloqueiosMap = {};
-                let diaInteiroBloqueado = null;
-
+                const bloqueiosList = [];
                 snapBloq.forEach(docSnap => {
-                    const b = docSnap.data();
-                    if (b.tipo === 'dia') {
-                        diaInteiroBloqueado = b.motivo || 'Barbearia Fechada / Folga';
-                    } else if (b.horario) {
-                        bloqueiosMap[b.horario] = b.motivo || 'Bloqueado';
-                    }
+                    bloqueiosList.push({ id: docSnap.id, ...docSnap.data() });
                 });
 
-                if (diaInteiroBloqueado) {
+                // 3. Calcular grade adaptativa contínua
+                const { isFuncionando, slots, diaBloqueado } = calculateDynamicTimeline(dataStr, 30, agendamentosList, bloqueiosList);
+
+                if (!isFuncionando) {
+                    loading.classList.add('hidden');
+                    semHorarios.classList.remove('hidden');
+                    document.getElementById('quadroSemHorariosTitulo').textContent = 'Barbearia Fechada';
+                    document.getElementById('quadroSemHorariosDesc').textContent = 'Confira nossos outros dias de atendimento.';
+                    updateLiveStatusBanner(null, false, dataStr);
+                    return;
+                }
+
+                if (diaBloqueado) {
                     loading.classList.add('hidden');
                     semHorarios.classList.remove('hidden');
                     document.getElementById('quadroSemHorariosTitulo').textContent = 'Dia Bloqueado';
-                    document.getElementById('quadroSemHorariosDesc').textContent = `Motivo: ${diaInteiroBloqueado}`;
+                    document.getElementById('quadroSemHorariosDesc').textContent = `Motivo: ${diaBloqueado}`;
                     updateLiveStatusBanner(null, false, dataStr);
                     return;
                 }
@@ -3534,29 +3639,16 @@
 
                 let clienteCortandoAgora = null;
 
-                const cardsHtml = horariosDia.map(h => {
-                    const [hh, mm] = h.split(':').map(Number);
-                    const slotMinutos = hh * 60 + mm;
-                    const agendamento = agendamentosMap[h];
-                    const motivoBloqueio = bloqueiosMap[h];
-
-                    // Duração estimada do atendimento (40 minutos)
-                    const duracaoEstimada = (agendamento && agendamento.duracao) ? agendamento.duracao : 40;
-                    const slotFimMinutos = slotMinutos + duracaoEstimada;
-
-                    let isCortandoAgora = false;
-                    let isPassado = false;
-
-                    if (motivoBloqueio) {
-                        // Horário bloqueado manualmente pelo barbeiro
+                const cardsHtml = slots.map(slot => {
+                    if (slot.tipo === 'bloqueio') {
                         return `
                             <div class="p-3.5 rounded-xl border border-red-900/30 bg-red-950/10">
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="flex items-center gap-3">
-                                        <span class="text-zinc-500 font-mono text-sm">${h}</span>
+                                        <span class="text-zinc-500 font-mono text-sm">${slot.horario}</span>
                                         <div>
                                             <span class="text-xs font-semibold text-red-400 flex items-center gap-1">
-                                                🚫 Indisponível (${escapeHtml(motivoBloqueio)})
+                                                🚫 Indisponível (${escapeHtml(slot.motivo || 'Bloqueado')})
                                             </span>
                                         </div>
                                     </div>
@@ -3566,50 +3658,39 @@
                         `;
                     }
 
-                    if (isHoje) {
-                        if (agendamento && (agendamento.status === 'em_atendimento' || (horaMinutoAtual >= slotMinutos && horaMinutoAtual < slotFimMinutos))) {
-                            if (agendamento.status !== 'concluido') {
-                                isCortandoAgora = true;
-                                clienteCortandoAgora = { ...agendamento, horarioFim: agendamento.horarioFim || formatMinutesToTime(slotFimMinutos) };
-                            }
-                        } else if (horaMinutoAtual >= slotFimMinutos || (agendamento && agendamento.status === 'concluido')) {
-                            isPassado = true;
-                        }
-                    }
+                    if (slot.tipo === 'agendamento') {
+                        const ag = slot.agendamento;
+                        const isEmAtendimento = ag.status === 'em_atendimento' || (isHoje && horaMinutoAtual >= slot.startMin && horaMinutoAtual < slot.endMin && ag.status !== 'concluido');
+                        const isConcluido = ag.status === 'concluido';
+                        const isPassado = isHoje && (horaMinutoAtual >= slot.endMin || isConcluido);
 
-                    if (isCortandoAgora) {
-                        // Atendimento ativo no momento
-                        const fimPrevisto = agendamento.horarioFim || formatMinutesToTime(slotFimMinutos);
-                        return `
-                            <div class="p-4 rounded-2xl border-2 border-brand-dynamic bg-brand-dynamic/10 animate-pulse-glow shadow-lg">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="flex items-center gap-3">
-                                        <span class="text-brand-dynamic font-mono font-black text-xl">${h}</span>
-                                        <div>
-                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-dynamic text-zinc-950">
-                                                💈 Cortando Cabelo Agora
-                                            </span>
-                                            <h4 class="font-bold text-white text-base mt-1">${escapeHtml(agendamento.clienteNome)}</h4>
-                                            <p class="text-xs text-zinc-300">${escapeHtml(agendamento.servico)} • Previsão término: <strong class="text-brand-dynamic font-mono">${fimPrevisto}</strong></p>
+                        if (isEmAtendimento) {
+                            clienteCortandoAgora = { ...ag, horarioFim: slot.horarioFim };
+                            return `
+                                <div class="p-4 rounded-2xl border-2 border-brand-dynamic bg-brand-dynamic/10 animate-pulse-glow shadow-lg">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-brand-dynamic font-mono font-black text-xl">${slot.horario}</span>
+                                            <div>
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-dynamic text-zinc-950">
+                                                    💈 Cortando Cabelo Agora
+                                                </span>
+                                                <h4 class="font-bold text-white text-base mt-1">${escapeHtml(ag.clienteNome)}</h4>
+                                                <p class="text-xs text-zinc-300">${escapeHtml(ag.servico)} • Previsão término: <strong class="text-brand-dynamic font-mono">${slot.horarioFim}</strong> (${slot.duracao} min)</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        `;
-                    }
-
-                    if (agendamento) {
-                        const isPendente = agendamento.status === 'pendente';
-                        const isConcluido = agendamento.status === 'concluido';
-                        const fimPrevisto = agendamento.horarioFim || formatMinutesToTime(slotFimMinutos);
+                            `;
+                        }
 
                         if (isConcluido) {
                             return `
                                 <div class="p-3 rounded-xl border border-zinc-800/50 bg-zinc-900/40 opacity-60">
                                     <div class="flex items-center justify-between gap-3">
                                         <div class="flex items-center gap-2.5">
-                                            <span class="text-zinc-500 font-mono text-sm line-through">${h}</span>
-                                            <span class="text-xs text-zinc-400">${escapeHtml(agendamento.clienteNome)} (${escapeHtml(agendamento.servico)})</span>
+                                            <span class="text-zinc-500 font-mono text-sm line-through">${slot.horario}</span>
+                                            <span class="text-xs text-zinc-400">${escapeHtml(ag.clienteNome)} (${escapeHtml(ag.servico)})</span>
                                         </div>
                                         <span class="text-[10px] font-semibold text-green-400 bg-green-500/10 px-2 py-0.5 rounded">✓ Concluído</span>
                                     </div>
@@ -3617,17 +3698,18 @@
                             `;
                         }
 
+                        const isPendente = ag.status === 'pendente';
                         return `
                             <div class="p-3.5 rounded-xl border border-zinc-800 bg-zinc-900/80 ${isPassado ? 'opacity-50' : ''}">
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="flex items-center gap-3">
                                         <div>
-                                            <span class="text-zinc-200 font-mono font-bold text-base block">${h}</span>
-                                            <span class="text-[10px] text-zinc-500 font-mono">até ${fimPrevisto}</span>
+                                            <span class="text-zinc-200 font-mono font-bold text-base block">${slot.horario}</span>
+                                            <span class="text-[10px] text-zinc-500 font-mono">até ${slot.horarioFim}</span>
                                         </div>
                                         <div>
-                                            <h4 class="font-semibold text-zinc-200 text-sm">${escapeHtml(agendamento.clienteNome)}</h4>
-                                            <p class="text-xs text-zinc-400">${escapeHtml(agendamento.servico)} (${duracaoEstimada} min)</p>
+                                            <h4 class="font-semibold text-zinc-200 text-sm">${escapeHtml(ag.clienteNome)}</h4>
+                                            <p class="text-xs text-zinc-400">${escapeHtml(ag.servico)} (${slot.duracao} min)</p>
                                         </div>
                                     </div>
                                     <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg ${isPendente ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}">
@@ -3638,30 +3720,34 @@
                         `;
                     }
 
+                    // Slot livre
+                    const isPassado = isHoje && (slot.startMin <= horaMinutoAtual);
+
                     if (isPassado) {
-                        // Horário encerrado
                         return `
                             <div class="p-3 rounded-xl border border-zinc-800/40 bg-zinc-900/30 opacity-40">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-zinc-500 font-mono text-sm">${h}</span>
+                                    <span class="text-zinc-500 font-mono text-sm">${slot.horario}</span>
                                     <span class="text-xs text-zinc-600 font-medium">Encerrado</span>
                                 </div>
                             </div>
                         `;
                     }
 
-                    // Horário Livre com botão de agendamento instantâneo
                     return `
                         <div class="p-3.5 rounded-xl border border-emerald-900/40 bg-emerald-950/10 hover:border-emerald-700/60 transition-all">
                             <div class="flex items-center justify-between gap-3">
                                 <div class="flex items-center gap-3">
-                                    <span class="text-emerald-400 font-mono font-bold text-base">${h}</span>
+                                    <div>
+                                        <span class="text-emerald-400 font-mono font-bold text-base block">${slot.horario}</span>
+                                        <span class="text-[10px] text-emerald-500/80 font-mono">até ${slot.horarioFim}</span>
+                                    </div>
                                     <span class="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
                                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                        Horário Livre
+                                        Horário Livre (${slot.duracao} min)
                                     </span>
                                 </div>
-                                <button onclick="agendarHorarioDireto('${dataStr}', '${h}')" class="px-3.5 py-1.5 bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 text-xs font-bold rounded-lg transition-all hover:scale-105 active:scale-95 shadow-sm flex items-center gap-1">
+                                <button onclick="agendarHorarioDireto('${dataStr}', '${slot.horario}')" class="px-3.5 py-1.5 bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 text-xs font-bold rounded-lg transition-all hover:scale-105 active:scale-95 shadow-sm flex items-center gap-1">
                                     <span>⚡ Agendar</span>
                                 </button>
                             </div>
