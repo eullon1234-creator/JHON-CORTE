@@ -518,17 +518,38 @@
                     <p class="text-zinc-400">Nenhum horário disponível para esta data.</p>
                 </div>
 
-                <!-- Resumo antes de confirmar -->
-                <div id="resumoBooking" class="hidden mt-6 p-4 bg-zinc-900 border border-zinc-800 rounded-xl">
-                    <h3 class="text-sm font-semibold text-zinc-400 mb-3 uppercase tracking-wide">Resumo</h3>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between"><span class="text-zinc-400">Nome</span><span id="resumoNome" class="font-medium"></span></div>
-                        <div class="flex justify-between"><span class="text-zinc-400">Telefone</span><span id="resumoTelefone" class="font-medium"></span></div>
-                        <div class="flex justify-between"><span class="text-zinc-400">Serviço</span><span id="resumoServico" class="font-medium text-brand-dynamic"></span></div>
-                        <div class="flex justify-between"><span class="text-zinc-400">Valor</span><span id="resumoPreco" class="font-medium text-brand-dynamic"></span></div>
-                        <div class="flex justify-between"><span class="text-zinc-400">Data</span><span id="resumoData" class="font-medium"></span></div>
-                        <div class="flex justify-between"><span class="text-zinc-400">Horário</span><span id="resumoHorario" class="font-medium"></span></div>
+                <!-- Resumo antes de confirmar com Previsão de Término Dinâmica -->
+                <div id="resumoBooking" class="hidden mt-6 p-5 bg-zinc-900 border border-zinc-800 rounded-2xl animate-fade-in">
+                    <h3 class="text-xs font-bold text-zinc-400 mb-3 uppercase tracking-wider flex items-center justify-between">
+                        <span>Resumo do Agendamento</span>
+                        <span class="text-brand-dynamic font-mono text-[11px]">Cálculo Dinâmico</span>
+                    </h3>
+                    <div class="space-y-2.5 text-sm">
+                        <div class="flex justify-between"><span class="text-zinc-400">Cliente</span><span id="resumoNome" class="font-medium text-white"></span></div>
+                        <div class="flex justify-between"><span class="text-zinc-400">WhatsApp</span><span id="resumoTelefone" class="font-medium text-white"></span></div>
+                        <div class="flex justify-between"><span class="text-zinc-400">Serviço</span><span id="resumoServico" class="font-semibold text-brand-dynamic"></span></div>
+                        <div class="flex justify-between"><span class="text-zinc-400">Valor</span><span id="resumoPreco" class="font-bold text-white"></span></div>
+                        <div class="flex justify-between"><span class="text-zinc-400">Data</span><span id="resumoData" class="font-medium text-white"></span></div>
+                        <hr class="border-zinc-800/80 my-2">
+                        <div class="flex justify-between items-center bg-zinc-950/60 p-3 rounded-xl border border-zinc-800/60">
+                            <div>
+                                <span class="block text-xs text-zinc-400">Horário de Início</span>
+                                <span id="resumoHorario" class="font-bold text-base text-white font-mono"></span>
+                            </div>
+                            <div class="text-center">
+                                <span class="block text-xs text-zinc-400">Duração</span>
+                                <span id="resumoDuracao" class="font-bold text-xs text-brand-dynamic bg-brand-dynamic/10 px-2 py-0.5 rounded-md font-mono"></span>
+                            </div>
+                            <div class="text-right">
+                                <span class="block text-xs text-zinc-400">Previsão de Término</span>
+                                <span id="resumoHorarioFim" class="font-bold text-base text-green-400 font-mono"></span>
+                            </div>
+                        </div>
                     </div>
+                    <p class="text-[11px] text-zinc-500 mt-3 flex items-start gap-1.5">
+                        <span class="text-brand-dynamic">💡</span>
+                        <span>O corte pode finalizar alguns minutos antes ou depois. Você pode acompanhar a fila ao vivo pelo site!</span>
+                    </p>
                 </div>
 
                 <button onclick="criarAgendamento()" id="btnConfirmar" class="w-full mt-6 bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold py-3.5 rounded-xl transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] opacity-50 cursor-not-allowed hidden" disabled>
@@ -1916,6 +1937,15 @@
                 selected.className = 'py-3 px-2 rounded-xl border text-sm font-semibold transition-all duration-200 bg-brand-dynamic border-brand-dynamic text-zinc-950 scale-[1.02]';
             }
 
+            // Calcular previsão de término dinâmica baseada na duração do serviço
+            const duracao = state.selectedServico ? (state.selectedServico.duracao || 40) : 40;
+            const [hh, mm] = horario.split(':').map(Number);
+            const totalMin = hh * 60 + mm + duracao;
+            const endH = Math.floor(totalMin / 60) % 24;
+            const endM = totalMin % 60;
+            const horarioFim = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+            state.selectedHorarioFim = horarioFim;
+
             // Mostrar resumo
             const resumo = document.getElementById('resumoBooking');
             const btnConfirmar = document.getElementById('btnConfirmar');
@@ -1924,13 +1954,18 @@
             btnConfirmar.disabled = false;
             btnConfirmar.classList.remove('opacity-50', 'cursor-not-allowed');
 
-            // Preencher resumo
+            // Preencher resumo com os novos dados dinâmicos
             document.getElementById('resumoNome').textContent = state.clienteNome;
             document.getElementById('resumoTelefone').textContent = formatPhone(state.clienteTelefone);
             document.getElementById('resumoServico').textContent = state.selectedServico.nome;
             document.getElementById('resumoPreco').textContent = formatCurrency(state.selectedServico.preco);
             document.getElementById('resumoData').textContent = formatDateFriendly(state.selectedData);
             document.getElementById('resumoHorario').textContent = horario;
+            
+            const duracaoEl = document.getElementById('resumoDuracao');
+            const fimEl = document.getElementById('resumoHorarioFim');
+            if (duracaoEl) duracaoEl.textContent = `${duracao} min`;
+            if (fimEl) fimEl.textContent = horarioFim;
         };
 
         // ============================================
@@ -2035,14 +2070,23 @@
                     return;
                 }
 
-                // Criar o agendamento
+                // Criar o agendamento com duração e previsão de término
+                const duracao = state.selectedServico.duracao || 40;
+                const [hh, mm] = state.selectedHorario.split(':').map(Number);
+                const totalMin = hh * 60 + mm + duracao;
+                const endH = Math.floor(totalMin / 60) % 24;
+                const endM = totalMin % 60;
+                const horarioFim = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+
                 const docRef = await addDoc(collection(db, "agendamentos"), {
                     clienteNome: state.clienteNome,
                     clienteTelefone: state.clienteTelefone,
                     servico: state.selectedServico.nome,
                     preco: state.selectedServico.preco,
+                    duracao: duracao,
                     data: state.selectedData,
                     horario: state.selectedHorario,
+                    horarioFim: horarioFim,
                     status: "pendente",
                     criadoEm: serverTimestamp()
                 });
@@ -2540,8 +2584,18 @@
                                 <button onclick="changeStatus('${a.id}', 'cancelado')" class="text-xs px-3 py-1.5 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition font-medium">✕ Cancelar</button>
                             ` : ''}
                             ${a.status === 'confirmado' ? `
+                                <button onclick="changeStatus('${a.id}', 'em_atendimento')" class="text-xs px-3 py-1.5 bg-brand-dynamic text-zinc-950 rounded-lg hover:bg-brand-dynamic/90 transition font-bold flex items-center gap-1">💈 Iniciar Corte</button>
+                                <button onclick="changeStatus('${a.id}', 'concluido')" class="text-xs px-3 py-1.5 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/30 transition font-medium">✓ Concluir</button>
                                 <button onclick="changeStatus('${a.id}', 'cancelado')" class="text-xs px-3 py-1.5 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition font-medium">✕ Cancelar</button>
                                 <a href="https://wa.me/55${a.clienteTelefone}?text=${encodeURIComponent(`Fala ${a.clienteNome}! 💈\n\nO corte anterior já está finalizando. Sua vez é em cerca de 10 minutos na ${state.config?.nome || 'barbearia'}, pode ir se adiantando! ✂️`)}" target="_blank" class="text-xs px-3 py-1.5 bg-brand-dynamic/20 text-brand-dynamic rounded-lg hover:bg-brand-dynamic/30 transition font-medium flex items-center gap-1">🔔 Avisar Vez (10 min)</a>
+                            ` : ''}
+                            ${a.status === 'em_atendimento' ? `
+                                <button onclick="changeStatus('${a.id}', 'concluido')" class="text-xs px-3 py-1.5 bg-green-500 text-zinc-950 font-bold rounded-lg hover:bg-green-400 transition flex items-center gap-1">✅ Finalizar Corte (Liberar Cadeira)</button>
+                                <button onclick="changeStatus('${a.id}', 'confirmado')" class="text-xs px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition">Pausar</button>
+                            ` : ''}
+                            ${a.status === 'concluido' ? `
+                                <span class="text-xs px-2.5 py-1 bg-green-500/10 text-green-400 rounded-lg font-medium">Atendimento Concluído</span>
+                                <button onclick="changeStatus('${a.id}', 'confirmado')" class="text-xs px-2 py-1 text-zinc-500 hover:text-zinc-300 transition">Desfazer</button>
                             ` : ''}
                             ${a.status === 'cancelado' ? `
                                 <button onclick="changeStatus('${a.id}', 'pendente')" class="text-xs px-3 py-1.5 bg-yellow-600/20 text-yellow-400 rounded-lg hover:bg-yellow-600/30 transition font-medium">↺ Reabrir</button>
@@ -3513,18 +3567,21 @@
                     }
 
                     if (isHoje) {
-                        if (agendamento && (horaMinutoAtual >= slotMinutos && horaMinutoAtual < slotFimMinutos)) {
-                            isCortandoAgora = true;
-                            clienteCortandoAgora = { ...agendamento, horarioFim: formatMinutesToTime(slotFimMinutos) };
-                        } else if (horaMinutoAtual >= slotFimMinutos) {
+                        if (agendamento && (agendamento.status === 'em_atendimento' || (horaMinutoAtual >= slotMinutos && horaMinutoAtual < slotFimMinutos))) {
+                            if (agendamento.status !== 'concluido') {
+                                isCortandoAgora = true;
+                                clienteCortandoAgora = { ...agendamento, horarioFim: agendamento.horarioFim || formatMinutesToTime(slotFimMinutos) };
+                            }
+                        } else if (horaMinutoAtual >= slotFimMinutos || (agendamento && agendamento.status === 'concluido')) {
                             isPassado = true;
                         }
                     }
 
                     if (isCortandoAgora) {
                         // Atendimento ativo no momento
+                        const fimPrevisto = agendamento.horarioFim || formatMinutesToTime(slotFimMinutos);
                         return `
-                            <div class="p-4 rounded-2xl border-2 border-brand-dynamic bg-brand-dynamic/10 animate-pulse-glow">
+                            <div class="p-4 rounded-2xl border-2 border-brand-dynamic bg-brand-dynamic/10 animate-pulse-glow shadow-lg">
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="flex items-center gap-3">
                                         <span class="text-brand-dynamic font-mono font-black text-xl">${h}</span>
@@ -3533,7 +3590,7 @@
                                                 💈 Cortando Cabelo Agora
                                             </span>
                                             <h4 class="font-bold text-white text-base mt-1">${escapeHtml(agendamento.clienteNome)}</h4>
-                                            <p class="text-xs text-zinc-300">${escapeHtml(agendamento.servico)} • ${formatCurrency(agendamento.preco)}</p>
+                                            <p class="text-xs text-zinc-300">${escapeHtml(agendamento.servico)} • Previsão término: <strong class="text-brand-dynamic font-mono">${fimPrevisto}</strong></p>
                                         </div>
                                     </div>
                                 </div>
@@ -3542,16 +3599,35 @@
                     }
 
                     if (agendamento) {
-                        // Horário Ocupado / Agendado
                         const isPendente = agendamento.status === 'pendente';
+                        const isConcluido = agendamento.status === 'concluido';
+                        const fimPrevisto = agendamento.horarioFim || formatMinutesToTime(slotFimMinutos);
+
+                        if (isConcluido) {
+                            return `
+                                <div class="p-3 rounded-xl border border-zinc-800/50 bg-zinc-900/40 opacity-60">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="text-zinc-500 font-mono text-sm line-through">${h}</span>
+                                            <span class="text-xs text-zinc-400">${escapeHtml(agendamento.clienteNome)} (${escapeHtml(agendamento.servico)})</span>
+                                        </div>
+                                        <span class="text-[10px] font-semibold text-green-400 bg-green-500/10 px-2 py-0.5 rounded">✓ Concluído</span>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
                         return `
                             <div class="p-3.5 rounded-xl border border-zinc-800 bg-zinc-900/80 ${isPassado ? 'opacity-50' : ''}">
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="flex items-center gap-3">
-                                        <span class="text-zinc-300 font-mono font-bold text-base">${h}</span>
+                                        <div>
+                                            <span class="text-zinc-200 font-mono font-bold text-base block">${h}</span>
+                                            <span class="text-[10px] text-zinc-500 font-mono">até ${fimPrevisto}</span>
+                                        </div>
                                         <div>
                                             <h4 class="font-semibold text-zinc-200 text-sm">${escapeHtml(agendamento.clienteNome)}</h4>
-                                            <p class="text-xs text-zinc-400">${escapeHtml(agendamento.servico)}</p>
+                                            <p class="text-xs text-zinc-400">${escapeHtml(agendamento.servico)} (${duracaoEstimada} min)</p>
                                         </div>
                                     </div>
                                     <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg ${isPendente ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}">
