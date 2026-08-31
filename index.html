@@ -230,14 +230,46 @@
     <!-- ==================== -->
     <div id="clientPage" class="hidden">
 
-        <!-- HERO -->
-        <section id="heroSection" class="relative overflow-hidden">
-            <!-- Background gradiente -->
-            <div class="absolute inset-0 bg-gradient-to-b from-zinc-900 via-zinc-950 to-zinc-950"></div>
-            <div class="absolute inset-0 opacity-10">
-                <div class="absolute top-0 left-1/4 w-96 h-96 bg-brand-dynamic rounded-full blur-3xl"></div>
-                <div class="absolute bottom-0 right-1/4 w-64 h-64 bg-brand-dynamic rounded-full blur-3xl"></div>
+        <!-- CLIENT TOP NAVIGATION BAR -->
+        <header class="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80">
+            <div class="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchClientTab('agendar')">
+                    <div class="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-sm">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-brand-dynamic">
+                            <path d="M6 3v18M6 3c2 2 6 2 6 0M6 9c2 2 6 2 6 0M6 15c2 2 6 2 6 0M18 3v18M18 3c-2 2-6 2-6 0M18 9c-2 2-6 2-6 0M18 15c-2 2-6 2-6 0" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <span id="clientNavNome" class="font-bold text-sm text-white uppercase tracking-wider truncate max-w-[130px] sm:max-w-[180px]">Barbearia</span>
+                </div>
+
+                <!-- Navigation Tabs Pills -->
+                <nav class="flex items-center gap-1 bg-zinc-900/80 p-1 rounded-xl border border-zinc-800/60">
+                    <button onclick="switchClientTab('agendar')" id="clientTabBtn-agendar" class="client-nav-btn active px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 bg-brand-dynamic text-zinc-950 shadow-sm">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <span>Agendar</span>
+                    </button>
+                    <button onclick="switchClientTab('quadro')" id="clientTabBtn-quadro" class="client-nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white transition-all flex items-center gap-1.5">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                        <span>Quadro</span>
+                    </button>
+                    <button onclick="switchClientTab('meusCortes')" id="clientTabBtn-meusCortes" class="client-nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white transition-all flex items-center gap-1.5">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        <span>Meus Cortes</span>
+                    </button>
+                </nav>
             </div>
+        </header>
+
+        <!-- ABA 1: AGENDAR (HERO + BOOKING FLOW) -->
+        <div id="clientViewAgendar" class="client-view">
+            <!-- HERO -->
+            <section id="heroSection" class="relative overflow-hidden">
+                <!-- Background gradiente -->
+                <div class="absolute inset-0 bg-gradient-to-b from-zinc-900 via-zinc-950 to-zinc-950"></div>
+                <div class="absolute inset-0 opacity-10">
+                    <div class="absolute top-0 left-1/4 w-96 h-96 bg-brand-dynamic rounded-full blur-3xl"></div>
+                    <div class="absolute bottom-0 right-1/4 w-64 h-64 bg-brand-dynamic rounded-full blur-3xl"></div>
+                </div>
 
             <div class="relative max-w-lg mx-auto px-4 py-16 md:py-24 text-center">
                 <!-- Logo -->
@@ -427,6 +459,146 @@
                 </button>
             </div>
         </section>
+        </div><!-- FIM ABA 1 (AGENDAR) -->
+
+        <!-- ABA 2: QUADRO DE HORÁRIOS & QUEM ESTÁ CORTANDO -->
+        <div id="clientViewQuadro" class="client-view hidden max-w-lg mx-auto px-4 py-6 animate-fade-in">
+            <!-- Header do Quadro -->
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold mb-1 flex items-center justify-center gap-2">
+                    <span class="text-brand-dynamic">📅</span> Quadro de Horários & Fila
+                </h2>
+                <p class="text-zinc-400 text-sm">Acompanhe quem está cortando e os horários livres em tempo real</p>
+            </div>
+
+            <!-- Card de Status ao Vivo -->
+            <div id="liveBarberStatusCard" class="mb-6 p-4 rounded-2xl border transition-all duration-300 bg-zinc-900 border-zinc-800">
+                <div class="flex items-center gap-3">
+                    <div id="liveStatusPulse" class="w-3.5 h-3.5 rounded-full bg-green-500 animate-ping"></div>
+                    <div class="flex-1">
+                        <p class="text-xs uppercase tracking-wider font-semibold text-zinc-400" id="liveStatusHeader">Status do Barbeiro</p>
+                        <p class="text-sm font-bold text-white mt-0.5" id="liveStatusDesc">Verificando atendimentos...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seletor de Data do Quadro -->
+            <div class="mb-6 bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+                <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Selecione o Dia</label>
+                <div class="flex items-center gap-2">
+                    <input type="date" id="quadroInputData" class="!py-2.5 !text-sm flex-1" onchange="loadQuadroHorarios(this.value)">
+                    <button onclick="setQuadroDataHoje()" class="px-3.5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold rounded-xl transition text-zinc-200 shrink-0">
+                        Hoje
+                    </button>
+                    <button onclick="setQuadroDataAmanha()" class="px-3.5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold rounded-xl transition text-zinc-200 shrink-0">
+                        Amanhã
+                    </button>
+                </div>
+                <div id="quadroDiaInfo" class="mt-2 text-xs text-brand-dynamic font-medium"></div>
+            </div>
+
+            <!-- Loading do Quadro -->
+            <div id="quadroLoading" class="hidden text-center py-10">
+                <div class="spinner mx-auto mb-3"></div>
+                <p class="text-zinc-500 text-sm">Carregando horários do dia...</p>
+            </div>
+
+            <!-- Grade / Timeline de Horários -->
+            <div id="quadroTimelineList" class="space-y-3">
+                <!-- Preenchido dinamicamente -->
+            </div>
+
+            <!-- Dia sem funcionamento / sem horários -->
+            <div id="quadroSemHorarios" class="hidden text-center py-12 bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-6">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-zinc-600 mx-auto mb-3">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <h3 class="text-base font-bold text-zinc-300 mb-1" id="quadroSemHorariosTitulo">Barbearia Fechada</h3>
+                <p class="text-zinc-500 text-sm" id="quadroSemHorariosDesc">Não há atendimentos programados para esta data.</p>
+            </div>
+        </div><!-- FIM ABA 2 (QUADRO) -->
+
+        <!-- ABA 3: CONTA DO CLIENTE (MEUS CORTES) -->
+        <div id="clientViewMeusCortes" class="client-view hidden max-w-lg mx-auto px-4 py-6 animate-fade-in">
+            <!-- Header Meus Cortes -->
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold mb-1 flex items-center justify-center gap-2">
+                    <span class="text-brand-dynamic">👤</span> Meus Cortes & Agendamentos
+                </h2>
+                <p class="text-zinc-400 text-sm">Consulte seu histórico e status dos seus agendamentos</p>
+            </div>
+
+            <!-- TELA DE LOGIN / IDENTIFICAÇÃO DO CLIENTE (quando não tem sessão) -->
+            <div id="meusCortesAuthCard" class="hidden bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-6 text-center animate-fade-in">
+                <div class="w-14 h-14 rounded-2xl bg-brand-dynamic/10 border border-brand-dynamic/30 flex items-center justify-center mx-auto mb-4">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-brand-dynamic">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold mb-1">Acessar Minha Conta</h3>
+                <p class="text-zinc-400 text-xs mb-5">Digite seu número de WhatsApp para consultar todos os seus cortes.</p>
+
+                <div class="space-y-3 text-left">
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">Seu WhatsApp</label>
+                        <input type="tel" id="inputMeusCortesTel" placeholder="(00) 00000-0000" class="w-full text-center text-lg font-medium" onkeydown="if(event.key==='Enter')loginCliente()">
+                    </div>
+                    <button onclick="loginCliente()" id="btnLoginCliente" class="w-full bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold py-3.5 rounded-xl transition-all duration-200 hover:scale-[1.01] active:scale-[0.98] mt-2">
+                        ACESSAR MEUS AGENDAMENTOS
+                    </button>
+                </div>
+            </div>
+
+            <!-- PAINEL DO CLIENTE IDENTIFICADO -->
+            <div id="meusCortesPainel" class="hidden space-y-6 animate-fade-in">
+                <!-- Perfil do Cliente -->
+                <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 flex items-center justify-between">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-12 h-12 rounded-xl bg-brand-dynamic/15 border border-brand-dynamic/30 flex items-center justify-center font-bold text-brand-dynamic text-lg" id="meusCortesAvatar">
+                            C
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base text-white" id="meusCortesNome">Cliente</h3>
+                            <p class="text-xs text-zinc-400 flex items-center gap-1 mt-0.5">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                <span id="meusCortesTelefone"></span>
+                            </p>
+                        </div>
+                    </div>
+                    <button onclick="sairContaCliente()" class="text-xs text-zinc-500 hover:text-red-400 p-2 rounded-lg hover:bg-zinc-800/80 transition" title="Trocar de conta / Sair">
+                        Trocar
+                    </button>
+                </div>
+
+                <!-- Estatísticas Rápidas do Cliente -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                        <p class="text-xs text-zinc-500 uppercase tracking-wider mb-1">Total de Agendamentos</p>
+                        <p class="text-xl font-bold text-brand-dynamic" id="meusCortesTotal">0</p>
+                    </div>
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                        <p class="text-xs text-zinc-500 uppercase tracking-wider mb-1">Próximo Horário</p>
+                        <p class="text-sm font-bold text-white truncate" id="meusCortesProximo">—</p>
+                    </div>
+                </div>
+
+                <!-- Botão de Agendamento Rápido -->
+                <button onclick="switchClientTab('agendar')" class="w-full bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-sm">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    SOLICITAR NOVO AGENDAMENTO
+                </button>
+
+                <!-- Lista de Agendamentos -->
+                <div>
+                    <h3 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-3">Histórico de Cortes</h3>
+                    <div id="meusCortesList" class="space-y-3">
+                        <!-- Preenchido dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </div><!-- FIM ABA 3 (MEUS CORTES) -->
 
         <!-- FOOTER -->
         <footer class="border-t border-zinc-900 py-8 px-4 mt-12">
@@ -888,6 +1060,9 @@
             selectedHorario: null,
             clienteNome: '',
             clienteTelefone: '',
+            // Cliente Portal & Sessão
+            clienteSessao: null,
+            clienteTab: 'agendar',
             // Admin
             adminFilterStatus: 'todos',
             adminTab: 'dashboard',
@@ -932,6 +1107,16 @@
                     showPage('clientPage');
                     await loadServicos();
                     setupDateInput();
+
+                    // Restaurar sessão salva do cliente se existir
+                    const sessao = getClienteSessao();
+                    if (sessao) {
+                        state.clienteSessao = sessao;
+                        const inputNome = document.getElementById('inputNome');
+                        const inputTelefone = document.getElementById('inputTelefone');
+                        if (inputNome && sessao.nome) inputNome.value = sessao.nome;
+                        if (inputTelefone && sessao.telefone) inputTelefone.value = formatPhone(sessao.telefone);
+                    }
                 }
 
                 // Esconder loading
@@ -1014,12 +1199,14 @@
             const meta = document.querySelector('meta[name="theme-color"]');
             if (meta) meta.content = '#09090b';
 
-            // Hero
+            // Hero & Nav
+            const clientNavNome = document.getElementById('clientNavNome');
             const heroNome = document.getElementById('heroNome');
             const heroSlogan = document.getElementById('heroSlogan');
             const heroDescricao = document.getElementById('heroDescricao');
             const footerNome = document.getElementById('footerNome');
 
+            if (clientNavNome) clientNavNome.textContent = cfg.nome || 'Barbearia';
             if (heroNome) heroNome.textContent = cfg.nome || 'Barbearia Premium';
             if (heroSlogan) heroSlogan.textContent = cfg.slogan || 'Seu estilo começa aqui.';
             if (heroDescricao) heroDescricao.textContent = cfg.descricao || 'Agende seu horário de forma rápida e fácil.';
@@ -1515,6 +1702,9 @@
                     status: "pendente",
                     criadoEm: serverTimestamp()
                 });
+
+                // Salvar sessão do cliente para auto-identificação futura
+                setClienteSessao(state.clienteNome, state.clienteTelefone);
 
                 // Gerar link de aprovação
                 const linkAprovacao = `${BASE_APP_URL}?action=aprovar&id=${docRef.id}`;
@@ -2607,11 +2797,476 @@
         }
 
         // ============================================
+        // CLIENTE - NAVEGAÇÃO ENTRE ABAS
+        // ============================================
+
+        window.switchClientTab = function(tabName) {
+            state.clienteTab = tabName;
+
+            // Reset visual dos botões de navegação
+            document.querySelectorAll('.client-nav-btn').forEach(btn => {
+                btn.className = 'client-nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white transition-all flex items-center gap-1.5';
+            });
+            const activeBtn = document.getElementById(`clientTabBtn-${tabName}`);
+            if (activeBtn) {
+                activeBtn.className = 'client-nav-btn active px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 bg-brand-dynamic text-zinc-950 shadow-sm';
+            }
+
+            // Alternar visibilidade das abas
+            document.getElementById('clientViewAgendar').classList.add('hidden');
+            document.getElementById('clientViewQuadro').classList.add('hidden');
+            document.getElementById('clientViewMeusCortes').classList.add('hidden');
+
+            if (tabName === 'agendar') {
+                document.getElementById('clientViewAgendar').classList.remove('hidden');
+            } else if (tabName === 'quadro') {
+                document.getElementById('clientViewQuadro').classList.remove('hidden');
+                const inputData = document.getElementById('quadroInputData');
+                if (!inputData.value) {
+                    inputData.value = formatDateISO(new Date());
+                }
+                loadQuadroHorarios(inputData.value);
+            } else if (tabName === 'meusCortes') {
+                document.getElementById('clientViewMeusCortes').classList.remove('hidden');
+                checkClientAuthAndLoad();
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // ============================================
+        // CLIENTE - SESSÃO LOCAL (MEUS CORTES)
+        // ============================================
+
+        function getClienteSessao() {
+            try {
+                const data = localStorage.getItem('barbearia_cliente_session');
+                return data ? JSON.parse(data) : null;
+            } catch(e) { return null; }
+        }
+
+        function setClienteSessao(nome, telefone) {
+            const sessao = { nome: nome || 'Cliente', telefone: telefone.replace(/\D/g, '') };
+            localStorage.setItem('barbearia_cliente_session', JSON.stringify(sessao));
+            state.clienteSessao = sessao;
+        }
+
+        window.sairContaCliente = function() {
+            localStorage.removeItem('barbearia_cliente_session');
+            state.clienteSessao = null;
+            checkClientAuthAndLoad();
+            showToast('Você saiu da sua conta.', 'info');
+        };
+
+        window.loginCliente = function() {
+            const telInput = document.getElementById('inputMeusCortesTel');
+            const tel = telInput.value.replace(/\D/g, '');
+            if (tel.length < 10) {
+                showToast('Digite um número de WhatsApp válido.', 'warning');
+                telInput.focus();
+                return;
+            }
+            setClienteSessao('Cliente', tel);
+            checkClientAuthAndLoad();
+            showToast('Identificado com sucesso!', 'success');
+        };
+
+        function checkClientAuthAndLoad() {
+            const authCard = document.getElementById('meusCortesAuthCard');
+            const painel = document.getElementById('meusCortesPainel');
+            const sessao = getClienteSessao();
+
+            if (!sessao || !sessao.telefone) {
+                authCard.classList.remove('hidden');
+                painel.classList.add('hidden');
+                setupGenericPhoneMask('inputMeusCortesTel');
+            } else {
+                authCard.classList.add('hidden');
+                painel.classList.remove('hidden');
+                loadMeusCortes();
+            }
+        }
+
+        // ============================================
+        // CLIENTE - QUADRO DE HORÁRIOS & QUEM ESTÁ CORTANDO
+        // ============================================
+
+        window.setQuadroDataHoje = function() {
+            const hoje = formatDateISO(new Date());
+            document.getElementById('quadroInputData').value = hoje;
+            loadQuadroHorarios(hoje);
+        };
+
+        window.setQuadroDataAmanha = function() {
+            const d = new Date();
+            d.setDate(d.getDate() + 1);
+            const amanha = formatDateISO(d);
+            document.getElementById('quadroInputData').value = amanha;
+            loadQuadroHorarios(amanha);
+        };
+
+        window.loadQuadroHorarios = async function(dataStr) {
+            if (!dataStr) dataStr = formatDateISO(new Date());
+            const timeline = document.getElementById('quadroTimelineList');
+            const semHorarios = document.getElementById('quadroSemHorarios');
+            const loading = document.getElementById('quadroLoading');
+            const diaInfo = document.getElementById('quadroDiaInfo');
+
+            timeline.innerHTML = '';
+            semHorarios.classList.add('hidden');
+            loading.classList.remove('hidden');
+
+            diaInfo.textContent = formatDateFriendly(dataStr);
+
+            try {
+                const dateObj = new Date(dataStr + 'T12:00:00');
+                const dayOfWeek = dateObj.getDay();
+                const dayKey = DIAS_KEY[dayOfWeek];
+                const isFuncionando = state.diasFuncionamento.includes(dayOfWeek);
+                const horariosDia = isFuncionando ? (state.horariosPorDia[dayKey] || []).sort() : [];
+
+                if (!isFuncionando || horariosDia.length === 0) {
+                    loading.classList.add('hidden');
+                    semHorarios.classList.remove('hidden');
+                    document.getElementById('quadroSemHorariosTitulo').textContent = !isFuncionando ? 'Barbearia Fechada neste dia' : 'Nenhum horário configurado';
+                    document.getElementById('quadroSemHorariosDesc').textContent = !isFuncionando ? 'Confira nossos outros dias de atendimento.' : 'Entre em contato pelo WhatsApp para mais informações.';
+                    updateLiveStatusBanner(null, false, dataStr);
+                    return;
+                }
+
+                // Buscar agendamentos da data no Firestore
+                const q = query(
+                    collection(db, "agendamentos"),
+                    where("data", "==", dataStr)
+                );
+                const snapshot = await getDocs(q);
+
+                const agendamentosMap = {};
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data.status === 'pendente' || data.status === 'confirmado') {
+                        agendamentosMap[data.horario] = { id: docSnap.id, ...data };
+                    }
+                });
+
+                loading.classList.add('hidden');
+
+                const agora = new Date();
+                const hojeISO = formatDateISO(agora);
+                const isHoje = dataStr === hojeISO;
+                const horaMinutoAtual = agora.getHours() * 60 + agora.getMinutes();
+
+                let clienteCortandoAgora = null;
+
+                const cardsHtml = horariosDia.map(h => {
+                    const [hh, mm] = h.split(':').map(Number);
+                    const slotMinutos = hh * 60 + mm;
+                    const agendamento = agendamentosMap[h];
+
+                    // Duração estimada do atendimento (40 minutos)
+                    const duracaoEstimada = (agendamento && agendamento.duracao) ? agendamento.duracao : 40;
+                    const slotFimMinutos = slotMinutos + duracaoEstimada;
+
+                    let isCortandoAgora = false;
+                    let isPassado = false;
+
+                    if (isHoje) {
+                        if (agendamento && (horaMinutoAtual >= slotMinutos && horaMinutoAtual < slotFimMinutos)) {
+                            isCortandoAgora = true;
+                            clienteCortandoAgora = { ...agendamento, horarioFim: formatMinutesToTime(slotFimMinutos) };
+                        } else if (horaMinutoAtual >= slotFimMinutos) {
+                            isPassado = true;
+                        }
+                    }
+
+                    if (isCortandoAgora) {
+                        // Atendimento ativo no momento
+                        return `
+                            <div class="p-4 rounded-2xl border-2 border-brand-dynamic bg-brand-dynamic/10 animate-pulse-glow">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-brand-dynamic font-mono font-black text-xl">${h}</span>
+                                        <div>
+                                            <span class="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-dynamic text-zinc-950">
+                                                💈 Cortando Cabelo Agora
+                                            </span>
+                                            <h4 class="font-bold text-white text-base mt-1">${escapeHtml(agendamento.clienteNome)}</h4>
+                                            <p class="text-xs text-zinc-300">${escapeHtml(agendamento.servico)} • ${formatCurrency(agendamento.preco)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    if (agendamento) {
+                        // Horário Ocupado / Agendado
+                        const isPendente = agendamento.status === 'pendente';
+                        return `
+                            <div class="p-3.5 rounded-xl border border-zinc-800 bg-zinc-900/80 ${isPassado ? 'opacity-50' : ''}">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-zinc-300 font-mono font-bold text-base">${h}</span>
+                                        <div>
+                                            <h4 class="font-semibold text-zinc-200 text-sm">${escapeHtml(agendamento.clienteNome)}</h4>
+                                            <p class="text-xs text-zinc-400">${escapeHtml(agendamento.servico)}</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg ${isPendente ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}">
+                                        ${isPendente ? '⏳ Agendado' : '✓ Confirmado'}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    if (isPassado) {
+                        // Horário encerrado
+                        return `
+                            <div class="p-3 rounded-xl border border-zinc-800/40 bg-zinc-900/30 opacity-40">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-zinc-500 font-mono text-sm">${h}</span>
+                                    <span class="text-xs text-zinc-600 font-medium">Encerrado</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    // Horário Livre com botão de agendamento instantâneo
+                    return `
+                        <div class="p-3.5 rounded-xl border border-emerald-900/40 bg-emerald-950/10 hover:border-emerald-700/60 transition-all">
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-emerald-400 font-mono font-bold text-base">${h}</span>
+                                    <span class="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        Horário Livre
+                                    </span>
+                                </div>
+                                <button onclick="agendarHorarioDireto('${dataStr}', '${h}')" class="px-3.5 py-1.5 bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 text-xs font-bold rounded-lg transition-all hover:scale-105 active:scale-95 shadow-sm flex items-center gap-1">
+                                    <span>⚡ Agendar</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                timeline.innerHTML = cardsHtml;
+                updateLiveStatusBanner(clienteCortandoAgora, isHoje, dataStr);
+
+            } catch (error) {
+                console.error('Erro ao carregar quadro:', error);
+                loading.classList.add('hidden');
+                showToast('Erro ao carregar quadro de horários.', 'error');
+            }
+        };
+
+        function updateLiveStatusBanner(clienteCortandoAgora, isHoje, dataStr) {
+            const card = document.getElementById('liveBarberStatusCard');
+            const header = document.getElementById('liveStatusHeader');
+            const desc = document.getElementById('liveStatusDesc');
+            const pulse = document.getElementById('liveStatusPulse');
+
+            if (!isHoje) {
+                card.className = 'mb-6 p-4 rounded-2xl border bg-zinc-900 border-zinc-800';
+                pulse.className = 'w-3 h-3 rounded-full bg-zinc-600';
+                header.textContent = `Visualizando ${formatDateFriendly(dataStr)}`;
+                desc.textContent = 'Confira os agendamentos e horários livres acima.';
+                return;
+            }
+
+            if (clienteCortandoAgora) {
+                card.className = 'mb-6 p-4 rounded-2xl border border-brand-dynamic/40 bg-brand-dynamic/10 shadow-lg';
+                pulse.className = 'w-3.5 h-3.5 rounded-full bg-brand-dynamic animate-ping';
+                header.textContent = '💈 Em Atendimento Agora';
+                desc.innerHTML = `<span class="text-brand-dynamic font-bold">${escapeHtml(clienteCortandoAgora.clienteNome)}</span> está cortando (<span class="text-zinc-300 font-medium">${escapeHtml(clienteCortandoAgora.servico)}</span>)`;
+            } else {
+                card.className = 'mb-6 p-4 rounded-2xl border border-emerald-900/50 bg-emerald-950/20';
+                pulse.className = 'w-3.5 h-3.5 rounded-full bg-emerald-400 animate-pulse';
+                header.textContent = '🟢 Barbeiro Livre no Momento';
+                desc.textContent = 'Nenhum cliente na cadeira agora. Escolha um horário para agendar!';
+            }
+        }
+
+        window.agendarHorarioDireto = function(dataStr, horario) {
+            switchClientTab('agendar');
+            startBooking();
+
+            // Auto-preencher dados do cliente caso já possua sessão salva
+            const sessao = getClienteSessao();
+            if (sessao && sessao.telefone) {
+                document.getElementById('inputNome').value = sessao.nome || '';
+                document.getElementById('inputTelefone').value = formatPhone(sessao.telefone);
+                state.clienteNome = sessao.nome || 'Cliente';
+                state.clienteTelefone = sessao.telefone;
+                goToStep(2);
+            } else {
+                goToStep(1);
+            }
+
+            // Pré-selecionar data e horário
+            state.selectedData = dataStr;
+            const inputData = document.getElementById('inputData');
+            if (inputData) {
+                inputData.value = dataStr;
+                const evt = new Event('change');
+                inputData.dispatchEvent(evt);
+            }
+            state.selectedHorario = horario;
+        };
+
+        // ============================================
+        // CLIENTE - MEUS CORTES (HISTÓRICO & STATUS)
+        // ============================================
+
+        window.loadMeusCortes = async function() {
+            const sessao = getClienteSessao();
+            if (!sessao || !sessao.telefone) return;
+
+            const list = document.getElementById('meusCortesList');
+            const totalEl = document.getElementById('meusCortesTotal');
+            const proxEl = document.getElementById('meusCortesProximo');
+            const nomeEl = document.getElementById('meusCortesNome');
+            const telEl = document.getElementById('meusCortesTelefone');
+            const avatarEl = document.getElementById('meusCortesAvatar');
+
+            nomeEl.textContent = sessao.nome || 'Cliente';
+            telEl.textContent = formatPhone(sessao.telefone);
+            avatarEl.textContent = (sessao.nome || 'C').charAt(0).toUpperCase();
+
+            list.innerHTML = '<div class="flex justify-center py-6"><div class="spinner"></div></div>';
+
+            try {
+                const q = query(
+                    collection(db, "agendamentos"),
+                    where("clienteTelefone", "==", sessao.telefone)
+                );
+                const snapshot = await getDocs(q);
+
+                let agendamentos = [];
+                snapshot.forEach(docSnap => {
+                    agendamentos.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                // Atualizar nome com o último cadastrado se disponível
+                if (agendamentos.length > 0) {
+                    const ult = agendamentos[agendamentos.length - 1];
+                    if (ult.clienteNome && ult.clienteNome !== 'Cliente') {
+                        sessao.nome = ult.clienteNome;
+                        setClienteSessao(sessao.nome, sessao.telefone);
+                        nomeEl.textContent = sessao.nome;
+                        avatarEl.textContent = sessao.nome.charAt(0).toUpperCase();
+                    }
+                }
+
+                totalEl.textContent = agendamentos.length;
+
+                // Ordenar do mais recente para o mais antigo
+                agendamentos.sort((a, b) => {
+                    const dateComp = b.data.localeCompare(a.data);
+                    if (dateComp !== 0) return dateComp;
+                    return b.horario.localeCompare(a.horario);
+                });
+
+                // Descobrir próximo agendamento ativo
+                const hoje = formatDateISO(new Date());
+                const agora = new Date();
+                const horaAtual = `${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`;
+
+                const proximos = agendamentos.filter(a => {
+                    if (a.status === 'cancelado') return false;
+                    if (a.data > hoje) return true;
+                    if (a.data === hoje && a.horario >= horaAtual) return true;
+                    return false;
+                }).sort((a, b) => a.data.localeCompare(b.data) || a.horario.localeCompare(b.horario));
+
+                if (proximos.length > 0) {
+                    proxEl.textContent = `${formatDateBR(proximos[0].data)} às ${proximos[0].horario}`;
+                } else {
+                    proxEl.textContent = 'Nenhum agendamento ativo';
+                }
+
+                if (agendamentos.length === 0) {
+                    list.innerHTML = `
+                        <div class="text-center py-8 bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                            <p class="text-zinc-400 text-sm mb-3">Você ainda não possui agendamentos cadastrados com este número.</p>
+                            <button onclick="switchClientTab('agendar')" class="px-4 py-2 bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold text-xs rounded-xl transition">
+                                FAZER MEU PRIMEIRO AGENDAMENTO
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                list.innerHTML = agendamentos.map(a => `
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 animate-fade-in">
+                        <div class="flex items-start justify-between mb-2">
+                            <div>
+                                <h4 class="font-bold text-white text-base">${escapeHtml(a.servico)}</h4>
+                                <p class="text-brand-dynamic font-semibold text-sm">${formatCurrency(a.preco)}</p>
+                            </div>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-lg ${getStatusBadgeClass(a.status)}">
+                                ${getStatusLabel(a.status)}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs text-zinc-400 mb-3 pt-2 border-t border-zinc-800/80">
+                            <span class="flex items-center gap-1.5">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                ${formatDateBR(a.data)}
+                            </span>
+                            <span class="flex items-center gap-1.5">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                                ${a.horario}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2 pt-2 border-t border-zinc-800/50">
+                            ${(a.status === 'pendente' || a.status === 'confirmado') ? `
+                                <button onclick="cancelarMeuAgendamento('${a.id}')" class="text-xs px-3 py-1.5 bg-red-950/40 text-red-400 border border-red-900/40 rounded-lg hover:bg-red-900/30 transition font-medium">
+                                    Cancelar
+                                </button>
+                            ` : ''}
+                            <a href="https://wa.me/${WHATSAPP_BARBEIRO}?text=${encodeURIComponent(`Olá! Gostaria de falar sobre meu agendamento de ${a.servico} no dia ${formatDateBR(a.data)} às ${a.horario}.`)}" target="_blank" class="text-xs px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition font-medium flex items-center gap-1">
+                                💬 WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Erro ao carregar meus cortes:', error);
+                list.innerHTML = '<p class="text-red-400 text-sm py-4 text-center">Erro ao carregar seus cortes.</p>';
+            }
+        };
+
+        window.cancelarMeuAgendamento = async function(id) {
+            if (!confirm('Deseja realmente cancelar este agendamento?')) return;
+            try {
+                await updateDoc(doc(db, "agendamentos", id), { status: "cancelado" });
+                showToast('Agendamento cancelado com sucesso.', 'info');
+                loadMeusCortes();
+            } catch (error) {
+                console.error('Erro ao cancelar:', error);
+                showToast('Erro ao cancelar agendamento.', 'error');
+            }
+        };
+
+        function formatMinutesToTime(totalMin) {
+            const h = Math.floor(totalMin / 60) % 24;
+            const m = totalMin % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        // ============================================
         // MÁSCARA DE TELEFONE
         // ============================================
 
         function setupPhoneMask() {
-            const input = document.getElementById('inputTelefone');
+            setupGenericPhoneMask('inputTelefone');
+            setupGenericPhoneMask('inputMeusCortesTel');
+        }
+
+        function setupGenericPhoneMask(elementId) {
+            const input = document.getElementById(elementId);
             if (!input) return;
 
             input.addEventListener('input', function(e) {
