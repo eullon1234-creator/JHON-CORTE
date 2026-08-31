@@ -16,15 +16,9 @@
     <meta property="og:title" content="Barbearia - Agende seu horário">
     <meta property="og:description" content="Agende seu horário na nossa barbearia de forma rápida e fácil.">
 
-    <!--
-        PWA - Para futura implementação:
-        <link rel="manifest" href="manifest.json">
-        <script>
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('service-worker.js');
-            }
-        </script>
-    -->
+    <!-- PWA Manifest & Meta -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%2309090b'/%3E%3Cpath d='M150 80v352M150 80c40 40 120 40 120 0M150 200c40 40 120 40 120 0M150 320c40 40 120 40 120 0M362 80v352M362 80c-40 40-120 40-120 0M362 200c-40 40-120 40-120 0M362 320c-40 40-120 40-120 0' stroke='%23f59e0b' stroke-width='32' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -243,20 +237,27 @@
                 </div>
 
                 <!-- Navigation Tabs Pills -->
-                <nav class="flex items-center gap-1 bg-zinc-900/80 p-1 rounded-xl border border-zinc-800/60">
-                    <button onclick="switchClientTab('agendar')" id="clientTabBtn-agendar" class="client-nav-btn active px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 bg-brand-dynamic text-zinc-950 shadow-sm">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        <span>Agendar</span>
+                <div class="flex items-center gap-2">
+                    <nav class="flex items-center gap-1 bg-zinc-900/80 p-1 rounded-xl border border-zinc-800/60">
+                        <button onclick="switchClientTab('agendar')" id="clientTabBtn-agendar" class="client-nav-btn active px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 bg-brand-dynamic text-zinc-950 shadow-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            <span>Agendar</span>
+                        </button>
+                        <button onclick="switchClientTab('quadro')" id="clientTabBtn-quadro" class="client-nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white transition-all flex items-center gap-1.5">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+                            <span>Quadro</span>
+                        </button>
+                        <button onclick="switchClientTab('meusCortes')" id="clientTabBtn-meusCortes" class="client-nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white transition-all flex items-center gap-1.5">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <span>Meus Cortes</span>
+                        </button>
+                    </nav>
+                    <!-- Botão de Instalar App (PWA) -->
+                    <button id="btnPwaInstall" onclick="promptPwaInstall()" class="hidden px-2.5 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-brand-dynamic/40 text-brand-dynamic text-xs font-bold transition flex items-center gap-1 shadow-sm" title="Instalar aplicativo">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <span class="hidden sm:inline">App</span>
                     </button>
-                    <button onclick="switchClientTab('quadro')" id="clientTabBtn-quadro" class="client-nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white transition-all flex items-center gap-1.5">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
-                        <span>Quadro</span>
-                    </button>
-                    <button onclick="switchClientTab('meusCortes')" id="clientTabBtn-meusCortes" class="client-nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white transition-all flex items-center gap-1.5">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        <span>Meus Cortes</span>
-                    </button>
-                </nav>
+                </div>
             </div>
         </header>
 
@@ -447,11 +448,23 @@
                 <h2 class="text-2xl font-bold mb-2">Solicitação Enviada!</h2>
                 <p class="text-zinc-400 mb-6">Seu agendamento foi enviado com sucesso. Aguarde a confirmação pelo WhatsApp.</p>
 
-                <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-6 text-left text-sm space-y-2">
+                <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-4 mb-4 text-left text-sm space-y-2">
                     <div class="flex justify-between"><span class="text-zinc-400">Serviço</span><span id="sucessoServico" class="font-medium text-brand-dynamic"></span></div>
                     <div class="flex justify-between"><span class="text-zinc-400">Data</span><span id="sucessoData" class="font-medium"></span></div>
                     <div class="flex justify-between"><span class="text-zinc-400">Horário</span><span id="sucessoHorario" class="font-medium"></span></div>
                     <div class="flex justify-between"><span class="text-zinc-400">Status</span><span class="text-yellow-400 font-medium">⏳ Pendente</span></div>
+                </div>
+
+                <!-- Botões de Calendário / Agenda -->
+                <div class="grid grid-cols-2 gap-2 mb-6">
+                    <button onclick="adicionarGoogleAgenda(state.selectedServico?.nome, state.selectedData, state.selectedHorario, state.selectedServico?.duracao)" class="py-2.5 px-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-400"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        Google Agenda
+                    </button>
+                    <button onclick="baixarArquivoIcs(state.selectedServico?.nome, state.selectedData, state.selectedHorario, state.selectedServico?.duracao)" class="py-2.5 px-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-brand-dynamic"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Salvar no Celular
+                    </button>
                 </div>
 
                 <button onclick="resetBooking()" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-semibold py-3 rounded-xl transition">
@@ -789,6 +802,10 @@
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
                         <span>Horários</span>
                     </button>
+                    <button onclick="showAdminTab('bloqueios')" class="admin-tab flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all" data-tab="bloqueios">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                        <span>Bloqueios & Folgas</span>
+                    </button>
                     <button onclick="showAdminTab('personalizar')" class="admin-tab flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all" data-tab="personalizar">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                         <span>Personalizar</span>
@@ -899,6 +916,52 @@
                     <!-- Horários por dia -->
                     <div id="horariosPorDiaContainer" class="space-y-4">
                         <!-- Gerado dinamicamente -->
+                    </div>
+                </div>
+
+                <!-- TAB: Bloqueios & Folgas -->
+                <div id="tabBloqueios" class="admin-content hidden">
+                    <h2 class="text-xl font-bold mb-2">Bloqueios & Folgas</h2>
+                    <p class="text-zinc-400 text-sm mb-6">Bloqueie datas especiais, feriados ou horários específicos para evitar agendamentos indesejados.</p>
+
+                    <!-- Formulário de Novo Bloqueio -->
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-6">
+                        <h3 class="text-sm font-semibold text-zinc-300 uppercase tracking-wide mb-4">Adicionar Novo Bloqueio</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Tipo de Bloqueio</label>
+                                <select id="bloqueioTipo" onchange="toggleBloqueioTipoFields()" class="w-full">
+                                    <option value="dia">Dia Inteiro (Feriado / Folga / Fechado)</option>
+                                    <option value="horario">Horário Específico (Almoço / Compromisso)</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1.5">Data</label>
+                                    <input type="date" id="bloqueioData" class="w-full">
+                                </div>
+                                <div id="bloqueioHorarioContainer" class="hidden">
+                                    <label class="block text-sm font-medium text-zinc-300 mb-1.5">Horário</label>
+                                    <input type="time" id="bloqueioHorario" class="w-full">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-zinc-300 mb-1.5">Motivo do Bloqueio</label>
+                                <input type="text" id="bloqueioMotivo" placeholder="Ex: Feriado Nacional, Folga, Consulta médica">
+                            </div>
+                            <button onclick="adicionarBloqueio()" id="btnAdicionarBloqueio" class="w-full bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                SALVAR BLOQUEIO
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Bloqueios Ativos -->
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                        <h3 class="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-4">Bloqueios Cadastrados</h3>
+                        <div id="adminBloqueiosList" class="space-y-2">
+                            <p class="text-zinc-600 text-sm">Carregando bloqueios...</p>
+                        </div>
                     </div>
                 </div>
 
@@ -1373,11 +1436,35 @@
                 const ocupados = new Set();
                 snapshot.forEach(docSnap => {
                     const data = docSnap.data();
-                    // Somente pendentes e confirmados bloqueiam o horário
                     if (data.status === 'pendente' || data.status === 'confirmado') {
                         ocupados.add(data.horario);
                     }
                 });
+
+                // Buscar bloqueios para a data
+                const qBloq = query(
+                    collection(db, "bloqueios"),
+                    where("data", "==", dateStr)
+                );
+                const snapBloq = await getDocs(qBloq);
+                const bloqueiosMap = {};
+                let diaInteiroBloqueado = null;
+
+                snapBloq.forEach(docSnap => {
+                    const b = docSnap.data();
+                    if (b.tipo === 'dia') {
+                        diaInteiroBloqueado = b.motivo || 'Barbearia Fechada / Folga';
+                    } else if (b.horario) {
+                        bloqueiosMap[b.horario] = b.motivo || 'Bloqueado';
+                    }
+                });
+
+                if (diaInteiroBloqueado) {
+                    loading.classList.add('hidden');
+                    semHorarios.querySelector('p').textContent = `Data bloqueada: ${diaInteiroBloqueado}`;
+                    semHorarios.classList.remove('hidden');
+                    return;
+                }
 
                 // Verificar se é hoje para desabilitar horários passados
                 const agora = new Date();
@@ -1388,6 +1475,7 @@
 
                 container.innerHTML = horarios.map(h => {
                     const isOcupado = ocupados.has(h);
+                    const isBloqueado = bloqueiosMap[h];
                     let isPassado = false;
 
                     if (isHoje) {
@@ -1397,6 +1485,12 @@
                         isPassado = horarioDate <= agora;
                     }
 
+                    if (isBloqueado) {
+                        return `<button disabled class="py-3 px-2 rounded-xl bg-zinc-900/50 border border-zinc-800/50 text-red-400/80 text-sm font-medium cursor-not-allowed">
+                            <span class="block text-[10px] uppercase font-bold text-red-400">BLOQUEADO</span>
+                            <span class="line-through">${h}</span>
+                        </button>`;
+                    }
                     if (isOcupado) {
                         return `<button disabled class="py-3 px-2 rounded-xl bg-zinc-900/50 border border-zinc-800/50 text-zinc-600 text-sm font-medium cursor-not-allowed">
                             <span class="block text-xs">OCUPADO</span>
@@ -2055,6 +2149,7 @@
             else if (tab === 'agendamentos') loadAdminAgendamentos();
             else if (tab === 'servicos') loadAdminServicos();
             else if (tab === 'horarios') loadAdminHorarios();
+            else if (tab === 'bloqueios') loadAdminBloqueios();
             else if (tab === 'personalizar') loadAdminPersonalizar();
             else if (tab === 'mensagens') loadAdminMensagens();
         };
@@ -2949,6 +3044,33 @@
                     }
                 });
 
+                // Buscar bloqueios para a data no Firestore
+                const qBloq = query(
+                    collection(db, "bloqueios"),
+                    where("data", "==", dataStr)
+                );
+                const snapBloq = await getDocs(qBloq);
+                const bloqueiosMap = {};
+                let diaInteiroBloqueado = null;
+
+                snapBloq.forEach(docSnap => {
+                    const b = docSnap.data();
+                    if (b.tipo === 'dia') {
+                        diaInteiroBloqueado = b.motivo || 'Barbearia Fechada / Folga';
+                    } else if (b.horario) {
+                        bloqueiosMap[b.horario] = b.motivo || 'Bloqueado';
+                    }
+                });
+
+                if (diaInteiroBloqueado) {
+                    loading.classList.add('hidden');
+                    semHorarios.classList.remove('hidden');
+                    document.getElementById('quadroSemHorariosTitulo').textContent = 'Dia Bloqueado';
+                    document.getElementById('quadroSemHorariosDesc').textContent = `Motivo: ${diaInteiroBloqueado}`;
+                    updateLiveStatusBanner(null, false, dataStr);
+                    return;
+                }
+
                 loading.classList.add('hidden');
 
                 const agora = new Date();
@@ -2962,6 +3084,7 @@
                     const [hh, mm] = h.split(':').map(Number);
                     const slotMinutos = hh * 60 + mm;
                     const agendamento = agendamentosMap[h];
+                    const motivoBloqueio = bloqueiosMap[h];
 
                     // Duração estimada do atendimento (40 minutos)
                     const duracaoEstimada = (agendamento && agendamento.duracao) ? agendamento.duracao : 40;
@@ -2969,6 +3092,25 @@
 
                     let isCortandoAgora = false;
                     let isPassado = false;
+
+                    if (motivoBloqueio) {
+                        // Horário bloqueado manualmente pelo barbeiro
+                        return `
+                            <div class="p-3.5 rounded-xl border border-red-900/30 bg-red-950/10">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-zinc-500 font-mono text-sm">${h}</span>
+                                        <div>
+                                            <span class="text-xs font-semibold text-red-400 flex items-center gap-1">
+                                                🚫 Indisponível (${escapeHtml(motivoBloqueio)})
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] uppercase font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded">Bloqueado</span>
+                                </div>
+                            </div>
+                        `;
+                    }
 
                     if (isHoje) {
                         if (agendamento && (horaMinutoAtual >= slotMinutos && horaMinutoAtual < slotFimMinutos)) {
@@ -3219,12 +3361,20 @@
                                 ${a.horario}
                             </span>
                         </div>
-                        <div class="flex items-center gap-2 pt-2 border-t border-zinc-800/50">
+                        <div class="flex items-center gap-2 pt-2 border-t border-zinc-800/50 flex-wrap">
                             ${(a.status === 'pendente' || a.status === 'confirmado') ? `
                                 <button onclick="cancelarMeuAgendamento('${a.id}')" class="text-xs px-3 py-1.5 bg-red-950/40 text-red-400 border border-red-900/40 rounded-lg hover:bg-red-900/30 transition font-medium">
                                     Cancelar
                                 </button>
                             ` : ''}
+                            <button onclick="adicionarGoogleAgenda('${escapeHtml(a.servico)}', '${a.data}', '${a.horario}', 40)" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-blue-400 rounded-lg transition font-medium flex items-center gap-1">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                Google Agenda
+                            </button>
+                            <button onclick="baixarArquivoIcs('${escapeHtml(a.servico)}', '${a.data}', '${a.horario}', 40)" class="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-brand-dynamic rounded-lg transition font-medium flex items-center gap-1">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Celular
+                            </button>
                             <a href="https://wa.me/${WHATSAPP_BARBEIRO}?text=${encodeURIComponent(`Olá! Gostaria de falar sobre meu agendamento de ${a.servico} no dia ${formatDateBR(a.data)} às ${a.horario}.`)}" target="_blank" class="text-xs px-3 py-1.5 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition font-medium flex items-center gap-1">
                                 💬 WhatsApp
                             </a>
@@ -3285,6 +3435,243 @@
                 e.target.value = value;
             });
         }
+
+        // ============================================
+        // CALENDÁRIO: GOOGLE AGENDA & ICS (.ICS)
+        // ============================================
+
+        window.adicionarGoogleAgenda = function(servico, dataStr, horarioStr, duracaoMin) {
+            servico = servico || 'Corte de Cabelo';
+            duracaoMin = parseInt(duracaoMin) || 40;
+            const barbeariaNome = state.config?.nome || 'Barbearia';
+
+            const [ano, mes, dia] = dataStr.split('-').map(Number);
+            const [hora, min] = horarioStr.split(':').map(Number);
+
+            const startObj = new Date(ano, mes - 1, dia, hora, min);
+            const endObj = new Date(startObj.getTime() + duracaoMin * 60000);
+
+            const formatGoogleTime = (d) => {
+                return d.toISOString().replace(/-|:|\.\d+/g, '');
+            };
+
+            const datesParam = `${formatGoogleTime(startObj)}/${formatGoogleTime(endObj)}`;
+            const titleParam = encodeURIComponent(`✂️ ${servico} - ${barbeariaNome}`);
+            const detailsParam = encodeURIComponent(`Agendamento de ${servico} confirmado na ${barbeariaNome}.\nHorário: ${horarioStr}`);
+
+            const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titleParam}&dates=${datesParam}&details=${detailsParam}`;
+            window.open(googleUrl, '_blank');
+        };
+
+        window.baixarArquivoIcs = function(servico, dataStr, horarioStr, duracaoMin) {
+            servico = servico || 'Corte de Cabelo';
+            duracaoMin = parseInt(duracaoMin) || 40;
+            const barbeariaNome = state.config?.nome || 'Barbearia';
+
+            const [ano, mes, dia] = dataStr.split('-').map(Number);
+            const [hora, min] = horarioStr.split(':').map(Number);
+
+            const startObj = new Date(ano, mes - 1, dia, hora, min);
+            const endObj = new Date(startObj.getTime() + duracaoMin * 60000);
+
+            const formatIcsTime = (d) => {
+                return d.toISOString().replace(/-|:|\.\d+/g, '');
+            };
+
+            const icsContent = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//JHON CORTE//Sistema de Agendamento//PT',
+                'CALSCALE:GREGORIAN',
+                'BEGIN:VEVENT',
+                `SUMMARY:✂️ ${servico} - ${barbeariaNome}`,
+                `DESCRIPTION:Agendamento de ${servico} na ${barbeariaNome}`,
+                `DTSTART:${formatIcsTime(startObj)}`,
+                `DTEND:${formatIcsTime(endObj)}`,
+                'STATUS:CONFIRMED',
+                'END:VEVENT',
+                'END:VCALENDAR'
+            ].join('\r\n');
+
+            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.setAttribute('download', `agendamento-${dataStr}.ics`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Arquivo de calendário gerado!', 'success');
+        };
+
+        // ============================================
+        // PWA - INSTALAÇÃO E SERVICE WORKER
+        // ============================================
+
+        let deferredPwaPrompt = null;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPwaPrompt = e;
+            const btn = document.getElementById('btnPwaInstall');
+            if (btn) btn.classList.remove('hidden');
+        });
+
+        window.promptPwaInstall = async function() {
+            if (deferredPwaPrompt) {
+                deferredPwaPrompt.prompt();
+                const { outcome } = await deferredPwaPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    showToast('Aplicativo instalado com sucesso!', 'success');
+                }
+                deferredPwaPrompt = null;
+                const btn = document.getElementById('btnPwaInstall');
+                if (btn) btn.classList.add('hidden');
+            } else {
+                // Instruções para iOS ou navegadores sem prompt automático
+                const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                const modal = document.getElementById('modalContent');
+                modal.innerHTML = `
+                    <div class="text-center">
+                        <div class="w-14 h-14 rounded-2xl bg-brand-dynamic/15 border border-brand-dynamic/30 flex items-center justify-center mx-auto mb-4">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-brand-dynamic">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">Instalar Aplicativo</h3>
+                        <p class="text-zinc-400 text-sm mb-6">
+                            ${isIos 
+                                ? 'Para instalar no seu iPhone: Toque no botão de <strong>Compartilhar</strong> (ícone com quadrado e seta para cima) e depois em <strong>"Adicionar à Tela de Início"</strong>.' 
+                                : 'Abra o menu do seu navegador e clique em <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong>.'}
+                        </p>
+                        <button onclick="closeModal()" class="w-full bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold py-3 rounded-xl transition">
+                            ENTENDI
+                        </button>
+                    </div>
+                `;
+                openModal();
+            }
+        };
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => {
+                    console.log('Service Worker not registered in local environment:', err);
+                });
+            });
+        }
+
+        // ============================================
+        // ADMIN - BLOQUEIOS & FOLGAS
+        // ============================================
+
+        window.toggleBloqueioTipoFields = function() {
+            const tipo = document.getElementById('bloqueioTipo').value;
+            const horarioContainer = document.getElementById('bloqueioHorarioContainer');
+            if (tipo === 'horario') {
+                horarioContainer.classList.remove('hidden');
+            } else {
+                horarioContainer.classList.add('hidden');
+            }
+        };
+
+        window.loadAdminBloqueios = async function() {
+            const list = document.getElementById('adminBloqueiosList');
+            const dataInput = document.getElementById('bloqueioData');
+            if (!dataInput.value) {
+                dataInput.value = formatDateISO(new Date());
+            }
+
+            list.innerHTML = '<div class="flex justify-center py-6"><div class="spinner"></div></div>';
+
+            try {
+                const q = query(collection(db, "bloqueios"), orderBy("data", "desc"));
+                const snapshot = await getDocs(q);
+
+                const bloqueios = [];
+                snapshot.forEach(docSnap => {
+                    bloqueios.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                if (bloqueios.length === 0) {
+                    list.innerHTML = '<p class="text-zinc-600 text-sm py-4 text-center">Nenhum bloqueio ou folga cadastrado.</p>';
+                    return;
+                }
+
+                list.innerHTML = bloqueios.map(b => `
+                    <div class="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 flex items-center justify-between gap-3 animate-fade-in">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xs font-bold uppercase px-2 py-0.5 rounded ${b.tipo === 'dia' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}">
+                                    ${b.tipo === 'dia' ? '📅 Dia Inteiro' : `⏰ Horário: ${b.horario}`}
+                                </span>
+                                <span class="text-sm font-semibold text-white">${formatDateBR(b.data)}</span>
+                            </div>
+                            <p class="text-xs text-zinc-400">Motivo: <span class="text-zinc-300 font-medium">${escapeHtml(b.motivo || 'Folga / Bloqueio')}</span></p>
+                        </div>
+                        <button onclick="removerBloqueio('${b.id}')" class="p-2 text-zinc-500 hover:text-red-400 hover:bg-zinc-800 rounded-lg transition" title="Remover bloqueio">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Erro ao carregar bloqueios:', error);
+                list.innerHTML = '<p class="text-red-400 text-sm py-4 text-center">Erro ao carregar bloqueios.</p>';
+            }
+        };
+
+        window.adicionarBloqueio = async function() {
+            const tipo = document.getElementById('bloqueioTipo').value;
+            const data = document.getElementById('bloqueioData').value;
+            const horario = document.getElementById('bloqueioHorario').value;
+            const motivo = document.getElementById('bloqueioMotivo').value.trim();
+            const btn = document.getElementById('btnAdicionarBloqueio');
+
+            if (!data) {
+                showToast('Selecione uma data.', 'warning');
+                return;
+            }
+            if (tipo === 'horario' && !horario) {
+                showToast('Selecione um horário para o bloqueio.', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const bloqueioData = {
+                    tipo,
+                    data,
+                    horario: tipo === 'horario' ? horario : null,
+                    motivo: motivo || (tipo === 'dia' ? 'Dia fechado / Folga' : 'Horário indisponível'),
+                    criadoEm: serverTimestamp()
+                };
+
+                await addDoc(collection(db, "bloqueios"), bloqueioData);
+                showToast('Bloqueio salvo com sucesso!', 'success');
+                document.getElementById('bloqueioMotivo').value = '';
+                loadAdminBloqueios();
+            } catch (error) {
+                console.error('Erro ao adicionar bloqueio:', error);
+                showToast('Erro ao salvar bloqueio.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'SALVAR BLOQUEIO';
+            }
+        };
+
+        window.removerBloqueio = async function(id) {
+            if (!confirm('Deseja remover este bloqueio e liberar o agendamento?')) return;
+            try {
+                await deleteDoc(doc(db, "bloqueios", id));
+                showToast('Bloqueio removido com sucesso!', 'success');
+                loadAdminBloqueios();
+            } catch (error) {
+                console.error('Erro ao remover bloqueio:', error);
+                showToast('Erro ao remover bloqueio.', 'error');
+            }
+        };
 
         // ============================================
         // EVENTOS E INICIALIZAÇÃO FINAL
