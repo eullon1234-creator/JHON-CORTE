@@ -136,9 +136,11 @@
             -webkit-backdrop-filter: blur(12px);
         }
 
-        /* Input estilo premium */
-        input[type="text"], input[type="tel"], input[type="number"], input[type="date"],
-        input[type="time"], input[type="color"], textarea, select {
+        /* Input estilo premium para TODOS os tipos de input */
+        input, input[type="text"], input[type="url"], input[type="email"], input[type="password"],
+        input[type="tel"], input[type="number"], input[type="date"], input[type="time"],
+        input[type="color"], textarea, select {
+            background-color: #18181b !important;
             background: #18181b !important;
             border: 1px solid #3f3f46 !important;
             color: #ffffff !important;
@@ -147,7 +149,11 @@
             transition: all 0.2s !important;
             outline: none !important;
             width: 100% !important;
-            font-size: 16px !important;
+            font-size: 15px !important;
+        }
+        input::placeholder, textarea::placeholder {
+            color: #71717a !important;
+            opacity: 1 !important;
         }
         input:focus, textarea:focus, select:focus {
             border-color: var(--brand-color) !important;
