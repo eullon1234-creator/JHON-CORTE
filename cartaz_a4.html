@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartaz A4 - Agendamento QR Code</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #050507;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .font-cinzel {
+            font-family: 'Cinzel', serif;
+        }
+
+        /* Dimensões exatas de A4 (210mm x 297mm) */
+        .a4-page {
+            width: 210mm;
+            height: 297mm;
+            padding: 14mm 16mm;
+            background: radial-gradient(circle at 50% 20%, #1c1917 0%, #0c0a09 60%, #050507 100%);
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(245, 158, 11, 0.15);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Bordas duplas douradas de luxo */
+        .gold-border-outer {
+            border: 2px solid rgba(245, 158, 11, 0.4);
+            border-radius: 20px;
+            padding: 5px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .gold-border-inner {
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 14px;
+            padding: 16px 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            background: rgba(12, 10, 9, 0.4);
+        }
+
+        /* Cantoneiras douradas decorativas */
+        .corner {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-color: #f59e0b;
+            border-style: solid;
+        }
+        .corner-tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-top-left-radius: 8px; }
+        .corner-tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-top-right-radius: 8px; }
+        .corner-bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-bottom-left-radius: 8px; }
+        .corner-br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-bottom-right-radius: 8px; }
+
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #fef08a 0%, #f59e0b 50%, #b45309 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gold-glow-box {
+            box-shadow: 0 0 35px rgba(245, 158, 11, 0.25), 0 10px 25px rgba(0,0,0,0.6);
+        }
+
+        /* Configurações para Impressão perfeita */
+        @media print {
+            body {
+                background: none;
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .a4-page {
+                box-shadow: none;
+                margin: 0;
+                width: 210mm;
+                height: 297mm;
+                page-break-after: always;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR FLUTUANTE DE AÇÕES (NÃO SAI NA IMPRESSÃO) -->
+    <div class="no-print fixed top-4 right-4 z-50 flex items-center gap-3 bg-zinc-900/90 backdrop-blur-md p-3 rounded-2xl border border-zinc-700 shadow-2xl">
+        <button onclick="window.print()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-sm rounded-xl transition flex items-center gap-2 shadow-lg hover:scale-105 active:scale-95">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            IMPRIMIR EM A4 / SALVAR PDF
+        </button>
+        <a href="index.html" class="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-semibold rounded-xl transition">
+            Voltar ao Site
+        </a>
+    </div>
+
+    <!-- FOLHA A4 -->
+    <div class="a4-page">
+        <div class="gold-border-outer">
+            <!-- Cantoneiras -->
+            <div class="corner corner-tl"></div>
+            <div class="corner corner-tr"></div>
+            <div class="corner corner-bl"></div>
+            <div class="corner corner-br"></div>
+
+            <div class="gold-border-inner">
+
+                <!-- 1. CABEÇALHO / LOGO -->
+                <div class="w-full pt-1">
+                    <!-- Ícone Tesoura & Navalha -->
+                    <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400/20 to-amber-600/10 border border-amber-500/40 mb-2 shadow-md">
+                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round">
+                            <path d="M6 3v18M6 3c2 2 6 2 6 0M6 15c2 2 6 2 6 0M18 3v18M18 3c-2 2-6 2-6 0M18 9c-2 2-6 2-6 0M18 15c-2 2-6 2-6 0"/>
+                        </svg>
+                    </div>
+
+                    <h2 class="font-cinzel text-xl tracking-[0.25em] text-amber-400 font-bold uppercase">
+                        JHON CORTE
+                    </h2>
+                    <p class="text-[11px] text-zinc-400 tracking-[0.3em] uppercase font-semibold mt-0.5">
+                        BARBEARIA & ESTILO
+                    </p>
+                </div>
+
+                <!-- 2. TÍTULO PRINCIPAL (CHAMADA) -->
+                <div class="w-full my-1">
+                    <span class="inline-block px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-extrabold uppercase tracking-widest mb-2">
+                        ⚡ Agendamento Online Rápido
+                    </span>
+                    <h1 class="text-3xl font-black tracking-tight uppercase leading-tight text-white">
+                        AGENDE SEU HORÁRIO <br>
+                        <span class="gold-gradient-text">DIRETO NO CELULAR</span>
+                    </h1>
+                    <p class="text-xs text-zinc-300 font-medium mt-1 max-w-[85%] mx-auto">
+                        Evite filas de espera. Escolha o serviço, o melhor horário e acompanhe seu atendimento em tempo real.
+                    </p>
+                </div>
+
+                <!-- 3. CONTAINER DO QR CODE COM DESTAQUE MÁXIMO -->
+                <div class="relative my-2 flex flex-col items-center">
+                    <!-- Badge superior -->
+                    <div class="mb-2.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-zinc-950 font-black text-xs tracking-wider uppercase flex items-center gap-1.5 shadow-lg">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                        APONTE A CÂMERA AQUI
+                    </div>
+
+                    <!-- Moldura Branca do QR Code para leitura perfeita -->
+                    <div class="bg-white p-4 rounded-3xl border-4 border-amber-500 gold-glow-box">
+                        <img src="qrcode.png" alt="QR Code para Agendamento" class="w-52 h-52 object-contain block">
+                    </div>
+
+                    <p class="text-[11px] text-zinc-400 font-semibold mt-2.5 tracking-wide">
+                        Não precisa baixar aplicativo • 100% Grátis & Rápido
+                    </p>
+                </div>
+
+                <!-- 4. PASSO A PASSO (3 ETAPAS VISUAIS) -->
+                <div class="w-full grid grid-cols-3 gap-2.5 bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3 my-1">
+                    <!-- Passo 1 -->
+                    <div class="flex flex-col items-center text-center p-1.5">
+                        <div class="w-7 h-7 rounded-lg bg-amber-500 text-zinc-950 font-black text-xs flex items-center justify-center mb-1.5 shadow">
+                            1
+                        </div>
+                        <h4 class="text-[11px] font-bold text-white uppercase leading-tight">Escaneie</h4>
+                        <p class="text-[9px] text-zinc-400 mt-0.5 leading-snug">Abra a câmera do celular</p>
+                    </div>
+
+                    <!-- Passo 2 -->
+                    <div class="flex flex-col items-center text-center p-1.5 border-x border-zinc-800">
+                        <div class="w-7 h-7 rounded-lg bg-amber-500 text-zinc-950 font-black text-xs flex items-center justify-center mb-1.5 shadow">
+                            2
+                        </div>
+                        <h4 class="text-[11px] font-bold text-white uppercase leading-tight">Escolha</h4>
+                        <p class="text-[9px] text-zinc-400 mt-0.5 leading-snug">Selecione corte & horário</p>
+                    </div>
+
+                    <!-- Passo 3 -->
+                    <div class="flex flex-col items-center text-center p-1.5">
+                        <div class="w-7 h-7 rounded-lg bg-amber-500 text-zinc-950 font-black text-xs flex items-center justify-center mb-1.5 shadow">
+                            3
+                        </div>
+                        <h4 class="text-[11px] font-bold text-white uppercase leading-tight">Confirme</h4>
+                        <p class="text-[9px] text-zinc-400 mt-0.5 leading-snug">Receba o aviso no WhatsApp</p>
+                    </div>
+                </div>
+
+                <!-- 5. RODAPÉ / LINK DIRETO -->
+                <div class="w-full pt-1 border-t border-zinc-800/80">
+                    <div class="flex items-center justify-between text-zinc-400 text-[10px] font-medium px-2">
+                        <span class="flex items-center gap-1">
+                            <span class="text-amber-400">💈</span> Fila ao Vivo no Site
+                        </span>
+                        <span class="text-amber-400 font-mono font-bold tracking-tight">
+                            eullon1234-creator.github.io/JHON-CORTE
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <span class="text-amber-400">💬</span> Lembretes no Zap
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
