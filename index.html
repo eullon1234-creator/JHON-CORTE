@@ -1156,6 +1156,24 @@
                             <button type="button" onclick="setIntervaloRapido(60)" class="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-300 transition">60 min</button>
                         </div>
 
+                        <!-- Opção de Intervalo de Almoço / Pausa -->
+                        <div class="bg-zinc-950/60 border border-zinc-800 rounded-xl p-3.5 space-y-2.5">
+                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                <input type="checkbox" id="geradorPausarAlmoco" onchange="toggleGeradorAlmoco(); atualizarPreviewGerador();" class="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-brand-dynamic focus:ring-brand-dynamic accent-amber-500">
+                                <span class="text-xs font-semibold text-zinc-300">Pausar para Almoço / Intervalo</span>
+                            </label>
+                            <div id="geradorAlmocoContainer" class="hidden grid grid-cols-2 gap-3 pt-1">
+                                <div>
+                                    <label class="block text-[11px] font-medium text-zinc-400 mb-1">Início da Pausa</label>
+                                    <input type="time" id="geradorPausaInicio" value="12:00" onchange="atualizarPreviewGerador()" class="!text-xs font-mono">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-medium text-zinc-400 mb-1">Fim da Pausa</label>
+                                    <input type="time" id="geradorPausaFim" value="13:00" onchange="atualizarPreviewGerador()" class="!text-xs font-mono">
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Preview dos horários gerados em tempo real -->
                         <div class="p-3.5 rounded-xl bg-zinc-950/80 border border-zinc-800 space-y-2">
                             <div class="flex items-center justify-between">
@@ -1321,6 +1339,15 @@
                         <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
                             <label class="block text-sm font-semibold text-zinc-300 mb-2">Mensagem de cancelamento</label>
                             <textarea id="cfgMsgCancelamento" rows="4" class="resize-none" placeholder="Olá {nome}! Infelizmente seu agendamento das {horario} foi cancelado."></textarea>
+                        </div>
+
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-semibold text-zinc-300">Mensagem de Lembrete (WhatsApp)</label>
+                                <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold">🔔 1 Clique</span>
+                            </div>
+                            <textarea id="cfgMsgLembrete" rows="4" class="resize-none" placeholder="Fala {nome}! Passando para lembrar do seu agendamento hoje às {horario} na {barbearia}. Te aguardo!"></textarea>
+                            <p class="text-xs text-zinc-500 mt-2">Mensagem disparada ao clicar no botão "🔔 Lembrar" nos agendamentos do Dashboard e lista do Admin.</p>
                         </div>
 
                         <button onclick="salvarMensagens()" class="w-full bg-brand-dynamic hover-bg-brand-dynamic text-zinc-950 font-bold py-3.5 rounded-xl transition-all duration-200">
@@ -1612,6 +1639,7 @@
             mensagemConfirmacao: "Olá {nome}! 👋\n\nSeu agendamento na {barbearia} foi confirmado! ✂️\n\n📅 Data: {data}\n⏰ Horário: {horario}\n✂️ Serviço: {servico}\n💰 Valor: {preco}\n\nTe esperamos! 🔥",
             mensagemCancelamento: "Olá {nome}.\n\nInfelizmente não conseguimos confirmar seu horário de {data} às {horario}.\n\nPor favor, escolha outro horário disponível.\n\nPedimos desculpas pelo transtorno.",
             mensagemNovoAgendamento: "✂️ NOVO AGENDAMENTO\n\n👤 Cliente: {nome}\n📱 WhatsApp: {telefone}\n\n✂️ Serviço: {servico}\n💰 Valor: {preco}\n\n📅 Data: {data}\n⏰ Horário: {horario}\n\n⚠️ Status: AGUARDANDO CONFIRMAÇÃO\n\n👇 APROVAR AGENDAMENTO:\n{link}",
+            mensagemLembrete: "Fala {nome}! 👋\n\nPassando para lembrar do seu horário hoje na {barbearia}! ✂️\n\n⏰ Horário: {horario}\n✂️ Serviço: {servico}\n\nTe aguardamos! Qualquer imprevisto, me avisa por aqui. 💈",
             horariosPorDia: {
                 domingo: [],
                 segunda: ["17:00", "17:40", "18:20", "19:00", "19:40", "20:20", "21:00"],
@@ -2270,11 +2298,12 @@
             inputData.min = hoje;
             inputData.value = '';
 
-            inputData.addEventListener('change', function() {
+            inputData.addEventListener('change', async function() {
                 const val = this.value;
                 const dataAlerta = document.getElementById('dataAlerta');
                 const dataInfo = document.getElementById('dataInfo');
                 const btnStep3 = document.getElementById('btnStep3');
+                const alertaTexto = dataAlerta.querySelector('p');
 
                 if (!val) {
                     dataAlerta.classList.add('hidden');
@@ -2288,14 +2317,46 @@
                 const date = new Date(val + 'T12:00:00');
                 const dayOfWeek = date.getDay();
 
-                // Verificar se a barbearia funciona neste dia
+                // 1. Verificar se a barbearia funciona neste dia da semana
                 if (!state.diasFuncionamento.includes(dayOfWeek)) {
+                    if (alertaTexto) alertaTexto.textContent = 'A barbearia não funciona neste dia da semana.';
                     dataAlerta.classList.remove('hidden');
                     dataInfo.classList.add('hidden');
                     btnStep3.disabled = true;
                     btnStep3.classList.add('opacity-50', 'cursor-not-allowed');
                     state.selectedData = null;
                     return;
+                }
+
+                // 2. Verificar se há bloqueio pontual / feriado / folga para esta data
+                try {
+                    const qBloq = query(
+                        collection(db, "bloqueios"),
+                        where("data", "==", val)
+                    );
+                    const snapBloq = await getDocs(qBloq);
+                    let diaBloqueado = false;
+                    let motivoBloqueio = '';
+
+                    snapBloq.forEach(docSnap => {
+                        const bData = docSnap.data();
+                        if (bData.tipo === 'dia') {
+                            diaBloqueado = true;
+                            motivoBloqueio = bData.motivo || 'Folga / Barbearia Fechada';
+                        }
+                    });
+
+                    if (diaBloqueado) {
+                        if (alertaTexto) alertaTexto.textContent = `Barbearia fechada nesta data: ${motivoBloqueio}`;
+                        dataAlerta.classList.remove('hidden');
+                        dataInfo.classList.add('hidden');
+                        btnStep3.disabled = true;
+                        btnStep3.classList.add('opacity-50', 'cursor-not-allowed');
+                        state.selectedData = null;
+                        return;
+                    }
+                } catch (err) {
+                    console.warn('Verificação de bloqueios:', err);
                 }
 
                 dataAlerta.classList.add('hidden');
@@ -2796,15 +2857,21 @@
                     listEl.innerHTML = '<p class="text-zinc-600 text-sm">Nenhum agendamento hoje.</p>';
                 } else {
                     listEl.innerHTML = ativos.map(a => `
-                        <div class="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
-                            <div class="flex items-center gap-3">
-                                <span class="text-brand-dynamic font-mono font-semibold text-sm">${a.horario}</span>
-                                <div>
-                                    <p class="text-sm font-medium">${escapeHtml(a.clienteNome)}</p>
-                                    <p class="text-xs text-zinc-500">${escapeHtml(a.servico)} • ${formatCurrency(a.preco)}</p>
+                        <div class="flex items-center justify-between p-3 bg-zinc-800/50 rounded-xl gap-2">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="text-brand-dynamic font-mono font-semibold text-sm shrink-0">${a.horario}</span>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium truncate">${escapeHtml(a.clienteNome)}</p>
+                                    <p class="text-xs text-zinc-500 truncate">${escapeHtml(a.servico)} • ${formatCurrency(a.preco)}</p>
                                 </div>
                             </div>
-                            <span class="text-xs font-medium px-2 py-1 rounded-md ${getStatusBadgeClass(a.status)}">${getStatusLabel(a.status)}</span>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button onclick="enviarLembreteWhatsapp('${a.clienteTelefone}', '${escapeHtml(a.clienteNome)}', '${escapeHtml(a.servico)}', '${a.data}', '${a.horario}')" class="p-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-lg text-xs font-semibold transition flex items-center gap-1" title="Enviar Lembrete WhatsApp">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                                    <span class="hidden sm:inline">Lembrar</span>
+                                </button>
+                                <span class="text-xs font-medium px-2 py-1 rounded-md ${getStatusBadgeClass(a.status)}">${getStatusLabel(a.status)}</span>
+                            </div>
                         </div>
                     `).join('');
                 }
@@ -2873,12 +2940,14 @@
                             ${a.status === 'pendente' ? `
                                 <button onclick="changeStatus('${a.id}', 'confirmado')" class="text-xs px-3 py-1.5 bg-green-600/20 text-green-400 rounded-lg hover:bg-green-600/30 transition font-medium">✓ Confirmar</button>
                                 <button onclick="changeStatus('${a.id}', 'cancelado')" class="text-xs px-3 py-1.5 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition font-medium">✕ Cancelar</button>
+                                <button onclick="enviarLembreteWhatsapp('${a.clienteTelefone}', '${escapeHtml(a.clienteNome)}', '${escapeHtml(a.servico)}', '${a.data}', '${a.horario}')" class="text-xs px-3 py-1.5 bg-amber-500/20 text-amber-400 rounded-lg hover:bg-amber-500/30 transition font-medium flex items-center gap-1">🔔 Lembrar</button>
                             ` : ''}
                             ${a.status === 'confirmado' ? `
                                 <button onclick="changeStatus('${a.id}', 'em_atendimento')" class="text-xs px-3 py-1.5 bg-brand-dynamic text-zinc-950 rounded-lg hover:bg-brand-dynamic/90 transition font-bold flex items-center gap-1">💈 Iniciar Corte</button>
                                 <button onclick="changeStatus('${a.id}', 'concluido')" class="text-xs px-3 py-1.5 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/30 transition font-medium">✓ Concluir</button>
                                 <button onclick="changeStatus('${a.id}', 'cancelado')" class="text-xs px-3 py-1.5 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition font-medium">✕ Cancelar</button>
-                                <a href="https://wa.me/55${a.clienteTelefone}?text=${encodeURIComponent(`Fala ${a.clienteNome}! 💈\n\nO corte anterior já está finalizando. Sua vez é em cerca de 10 minutos na ${state.config?.nome || 'barbearia'}, pode ir se adiantando! ✂️`)}" target="_blank" class="text-xs px-3 py-1.5 bg-brand-dynamic/20 text-brand-dynamic rounded-lg hover:bg-brand-dynamic/30 transition font-medium flex items-center gap-1">🔔 Avisar Vez (10 min)</a>
+                                <button onclick="enviarLembreteWhatsapp('${a.clienteTelefone}', '${escapeHtml(a.clienteNome)}', '${escapeHtml(a.servico)}', '${a.data}', '${a.horario}')" class="text-xs px-3 py-1.5 bg-amber-500/20 text-amber-400 rounded-lg hover:bg-amber-500/30 transition font-medium flex items-center gap-1">🔔 Lembrar</button>
+                                <a href="https://wa.me/55${a.clienteTelefone}?text=${encodeURIComponent(`Fala ${a.clienteNome}! 💈\n\nO corte anterior já está finalizando. Sua vez é em cerca de 10 minutos na ${state.config?.nome || 'barbearia'}, pode ir se adiantando! ✂️`)}" target="_blank" class="text-xs px-3 py-1.5 bg-brand-dynamic/20 text-brand-dynamic rounded-lg hover:bg-brand-dynamic/30 transition font-medium flex items-center gap-1">⏱️ Avisar Vez (10 min)</a>
                             ` : ''}
                             ${a.status === 'em_atendimento' ? `
                                 <button onclick="changeStatus('${a.id}', 'concluido')" class="text-xs px-3 py-1.5 bg-green-500 text-zinc-950 font-bold rounded-lg hover:bg-green-400 transition flex items-center gap-1">✅ Finalizar Corte (Liberar Cadeira)</button>
@@ -3088,7 +3157,19 @@
         // ADMIN - HORÁRIOS & GERADOR DE EXPEDIENTE
         // ============================================
 
-        window.calcularHorariosExpediente = function(horaInicio, horaFim, intervaloMin) {
+        window.toggleGeradorAlmoco = function() {
+            const check = document.getElementById('geradorPausarAlmoco');
+            const container = document.getElementById('geradorAlmocoContainer');
+            if (check && container) {
+                if (check.checked) {
+                    container.classList.remove('hidden');
+                } else {
+                    container.classList.add('hidden');
+                }
+            }
+        };
+
+        window.calcularHorariosExpediente = function(horaInicio, horaFim, intervaloMin, pausarAlmoco = false, pausaInicio = '12:00', pausaFim = '13:00') {
             const minInicio = timeToMinutes(horaInicio);
             const minFim = timeToMinutes(horaFim);
             const intervalo = parseInt(intervaloMin) || 35;
@@ -3096,8 +3177,18 @@
 
             if (minFim <= minInicio || intervalo <= 0) return lista;
 
+            const minPausaInicio = pausarAlmoco ? timeToMinutes(pausaInicio) : -1;
+            const minPausaFim = pausarAlmoco ? timeToMinutes(pausaFim) : -1;
+
             let atual = minInicio;
             while (atual <= minFim) {
+                // Se a hora cair no intervalo de pausa/almoço, pula para o fim da pausa
+                if (pausarAlmoco && minPausaInicio >= 0 && minPausaFim > minPausaInicio) {
+                    if (atual >= minPausaInicio && atual < minPausaFim) {
+                        atual += intervalo;
+                        continue;
+                    }
+                }
                 lista.push(minutesToTime(atual));
                 atual += intervalo;
             }
@@ -3116,8 +3207,11 @@
             const hInicio = document.getElementById('geradorHoraInicio')?.value || '18:00';
             const hFim = document.getElementById('geradorHoraFim')?.value || '22:00';
             const intervalo = parseInt(document.getElementById('geradorIntervalo')?.value) || 35;
+            const pausarAlmoco = document.getElementById('geradorPausarAlmoco')?.checked || false;
+            const pausaInicio = document.getElementById('geradorPausaInicio')?.value || '12:00';
+            const pausaFim = document.getElementById('geradorPausaFim')?.value || '13:00';
 
-            const horarios = calcularHorariosExpediente(hInicio, hFim, intervalo);
+            const horarios = calcularHorariosExpediente(hInicio, hFim, intervalo, pausarAlmoco, pausaInicio, pausaFim);
             const qtdSpan = document.getElementById('geradorQtdVagas');
             const previewContainer = document.getElementById('geradorPreviewLista');
 
@@ -3139,8 +3233,11 @@
             const hInicio = document.getElementById('geradorHoraInicio').value || '18:00';
             const hFim = document.getElementById('geradorHoraFim').value || '22:00';
             const intervalo = parseInt(document.getElementById('geradorIntervalo').value) || 35;
+            const pausarAlmoco = document.getElementById('geradorPausarAlmoco')?.checked || false;
+            const pausaInicio = document.getElementById('geradorPausaInicio')?.value || '12:00';
+            const pausaFim = document.getElementById('geradorPausaFim')?.value || '13:00';
 
-            const horariosGerados = calcularHorariosExpediente(hInicio, hFim, intervalo);
+            const horariosGerados = calcularHorariosExpediente(hInicio, hFim, intervalo, pausarAlmoco, pausaInicio, pausaFim);
             if (horariosGerados.length === 0) {
                 showToast('Horários inválidos para geração.', 'warning');
                 return;
@@ -3159,7 +3256,7 @@
                 });
                 state.horariosPorDia = novosHorariosPorDia;
                 state.config.horariosPorDia = novosHorariosPorDia;
-                showToast(`Grade de ${horariosGerados.length} horários (${intervalo} min) aplicada com sucesso!`, 'success');
+                showToast(`Grade de ${horariosGerados.length} horários (${intervalo} min${pausarAlmoco ? ' com pausa' : ''}) aplicada com sucesso!`, 'success');
                 loadAdminHorarios();
             } catch (error) {
                 console.error('Erro ao aplicar grade:', error);
@@ -3171,8 +3268,11 @@
             const hInicio = document.getElementById('geradorHoraInicio').value || '18:00';
             const hFim = document.getElementById('geradorHoraFim').value || '22:00';
             const intervalo = parseInt(document.getElementById('geradorIntervalo').value) || 35;
+            const pausarAlmoco = document.getElementById('geradorPausarAlmoco')?.checked || false;
+            const pausaInicio = document.getElementById('geradorPausaInicio')?.value || '12:00';
+            const pausaFim = document.getElementById('geradorPausaFim')?.value || '13:00';
 
-            const horariosGerados = calcularHorariosExpediente(hInicio, hFim, intervalo);
+            const horariosGerados = calcularHorariosExpediente(hInicio, hFim, intervalo, pausarAlmoco, pausaInicio, pausaFim);
             if (horariosGerados.length === 0) {
                 showToast('Horários inválidos para geração.', 'warning');
                 return;
@@ -3409,9 +3509,14 @@
         // ============================================
 
         function loadAdminMensagens() {
-            const cfg = state.config;
-            document.getElementById('cfgMsgConfirmacao').value = cfg.mensagemConfirmacao || DEFAULT_CONFIG.mensagemConfirmacao;
-            document.getElementById('cfgMsgCancelamento').value = cfg.mensagemCancelamento || DEFAULT_CONFIG.mensagemCancelamento;
+            const cfg = state.config || {};
+            const inputConf = document.getElementById('cfgMsgConfirmacao');
+            const inputCanc = document.getElementById('cfgMsgCancelamento');
+            const inputLemb = document.getElementById('cfgMsgLembrete');
+
+            if (inputConf) inputConf.value = cfg.mensagemConfirmacao || DEFAULT_CONFIG.mensagemConfirmacao;
+            if (inputCanc) inputCanc.value = cfg.mensagemCancelamento || DEFAULT_CONFIG.mensagemCancelamento;
+            if (inputLemb) inputLemb.value = cfg.mensagemLembrete || DEFAULT_CONFIG.mensagemLembrete;
         }
 
         window.salvarMensagens = async function() {
@@ -3419,6 +3524,7 @@
                 const data = {
                     mensagemConfirmacao: document.getElementById('cfgMsgConfirmacao').value.trim(),
                     mensagemCancelamento: document.getElementById('cfgMsgCancelamento').value.trim(),
+                    mensagemLembrete: document.getElementById('cfgMsgLembrete') ? document.getElementById('cfgMsgLembrete').value.trim() : (DEFAULT_CONFIG.mensagemLembrete || ''),
                     atualizadoEm: serverTimestamp()
                 };
 
@@ -4953,6 +5059,11 @@
         // CALENDÁRIO: GOOGLE AGENDA & ICS (.ICS)
         // ============================================
 
+        const padCalendar = (n) => String(n).padStart(2, '0');
+        const formatLocalCalendar = (d) => {
+            return `${d.getFullYear()}${padCalendar(d.getMonth() + 1)}${padCalendar(d.getDate())}T${padCalendar(d.getHours())}${padCalendar(d.getMinutes())}00`;
+        };
+
         window.adicionarGoogleAgenda = function(servico, dataStr, horarioStr, duracaoMin) {
             servico = servico || 'Corte de Cabelo';
             duracaoMin = parseInt(duracaoMin) || 40;
@@ -4964,15 +5075,11 @@
             const startObj = new Date(ano, mes - 1, dia, hora, min);
             const endObj = new Date(startObj.getTime() + duracaoMin * 60000);
 
-            const formatGoogleTime = (d) => {
-                return d.toISOString().replace(/-|:|\.\d+/g, '');
-            };
-
-            const datesParam = `${formatGoogleTime(startObj)}/${formatGoogleTime(endObj)}`;
+            const datesParam = `${formatLocalCalendar(startObj)}/${formatLocalCalendar(endObj)}`;
             const titleParam = encodeURIComponent(`✂️ ${servico} - ${barbeariaNome}`);
             const detailsParam = encodeURIComponent(`Agendamento de ${servico} confirmado na ${barbeariaNome}.\nHorário: ${horarioStr}`);
 
-            const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titleParam}&dates=${datesParam}&details=${detailsParam}`;
+            const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titleParam}&dates=${datesParam}&details=${detailsParam}&ctz=America/Sao_Paulo`;
             window.open(googleUrl, '_blank');
         };
 
@@ -4986,21 +5093,22 @@
 
             const startObj = new Date(ano, mes - 1, dia, hora, min);
             const endObj = new Date(startObj.getTime() + duracaoMin * 60000);
-
-            const formatIcsTime = (d) => {
-                return d.toISOString().replace(/-|:|\.\d+/g, '');
-            };
+            const nowObj = new Date();
 
             const icsContent = [
                 'BEGIN:VCALENDAR',
                 'VERSION:2.0',
                 'PRODID:-//JHON CORTE//Sistema de Agendamento//PT',
                 'CALSCALE:GREGORIAN',
+                'METHOD:PUBLISH',
                 'BEGIN:VEVENT',
+                `UID:corte-${dataStr}-${(horarioStr || '').replace(':', '')}-${Date.now()}@barbearia`,
+                `DTSTAMP:${formatLocalCalendar(nowObj)}`,
+                `DTSTART:${formatLocalCalendar(startObj)}`,
+                `DTEND:${formatLocalCalendar(endObj)}`,
                 `SUMMARY:✂️ ${servico} - ${barbeariaNome}`,
-                `DESCRIPTION:Agendamento de ${servico} na ${barbeariaNome}`,
-                `DTSTART:${formatIcsTime(startObj)}`,
-                `DTEND:${formatIcsTime(endObj)}`,
+                `DESCRIPTION:Agendamento de ${servico} na ${barbeariaNome}. Horário: ${horarioStr}`,
+                `LOCATION:${barbeariaNome}`,
                 'STATUS:CONFIRMED',
                 'END:VEVENT',
                 'END:VCALENDAR'
@@ -5014,6 +5122,28 @@
             link.click();
             document.body.removeChild(link);
             showToast('Arquivo de calendário gerado!', 'success');
+        };
+
+        // Disparo de Lembrete WhatsApp
+        window.enviarLembreteWhatsapp = function(clienteTelefone, clienteNome, servico, dataStr, horarioStr) {
+            const cfg = state.config || {};
+            const defaultTemplate = "Fala {nome}! 👋\n\nPassando para lembrar do seu horário hoje na {barbearia}! ✂️\n\n⏰ Horário: {horario}\n✂️ Serviço: {servico}\n\nTe aguardamos! Qualquer imprevisto, me avisa por aqui. 💈";
+            let msg = cfg.mensagemLembrete || defaultTemplate;
+            msg = msg
+                .replace(/{nome}/g, clienteNome || 'Cliente')
+                .replace(/{servico}/g, servico || 'Serviço')
+                .replace(/{data}/g, formatDateBR(dataStr))
+                .replace(/{horario}/g, horarioStr || '')
+                .replace(/{barbearia}/g, cfg.nome || 'Barbearia');
+
+            const cleanPhone = (clienteTelefone || '').replace(/\D/g, '');
+            if (!cleanPhone) {
+                showToast('Telefone do cliente não encontrado.', 'warning');
+                return;
+            }
+
+            const url = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
         };
 
         // ============================================
